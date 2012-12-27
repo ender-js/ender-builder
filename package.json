@@ -1,46 +1,41 @@
 {
-    "name": "ender"
-  , "description": "Open Module JavaScript Framework"
-  , "version": "0.9.8-dev"
-  , "authors": [
-        "Jacob Thornton @fat <jacob@twitter.com> (https://github.com/fat)"
+    "name"            : "ender-builder"
+  , "description"     : "Build assembler for the Ender CLI"
+  , "version"         : "0.0.0"
+  , "authors"         : [
+        "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
       , "Dustin Diaz @ded <dustin@obvious.com> (https://github.com/ded)"
-      , "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
+      , "Jacob Thornton @fat <jacob@twitter.com> (https://github.com/fat)"
     ]
-  , "keywords": [ "ender", "modules", "builder", "framework", "packager" ]
-  , "main": "./lib/main.js"
-  , "homepage": "https://ender.jit.su"
-  , "dependencies": {
-        "ender-repository" : "~0.0.2"
-      , "ender-minify"     : "~0.1.0"
-      , "colors"           : "~0.6.0"
-      , "async"            : "~0.1.22"
-      , "hogan.js"         : "~2.0.0"
-      , "archy"            : "~0.0.2"
-      , "colors-tmpl"      : "~0.1.0"
-      , "xregexp"          : "~2.0.0"
-      , "errno"            : "~0.0.3"
-      , "glob"             : "~3.1.14"
+  , "keywords"        : []
+  , "main"            : "./lib/index.js"
+  , "homepage"        : "https://ender.jit.su"
+  , "dependencies"    : {
+
+        "ender-package-util"     : "~0.0.0"
+      , "ender-minify"           : "~0.1.0"
+      , "ender-args-parser"      : "~0.0.1"
+      , "ender-dependency-graph" : "~0.0.1"
+      , "ender-args-parser"      : "~0.0.1"
+
+      , "errno"       : "~0.0.3"
+      , "async"              : "~0.1.22"
+      , "hogan.js"           : "~2.0.0"
+      , "glob"               : "~3.1.14"
     }
-  , "directories": {
-        "lib"         : "./lib"
-      , "bin"         : "./bin"
+  , "devDependencies" : {
+        "buster"             : "~0.6.12"
+      , "require-subvert"    : "~0.0.0"
+      , "mkfiletree"         : "~0.0.0"
     }
-  , "devDependencies": {
-        "buster"      : "~0.6.12"
-      , "rimraf"      : "~2.1.1"
-      , "jshint"      : "~0.9.1"
-      , "mkfiletree"  : "~0.0.0"
+  , "scripts"         : {
+        "test"               : "./node_modules/.bin/buster-test"
     }
-  , "bin": {
-        "ender"       : "./bin/ender"
+  , "bin"             : {
+        "ender-builder"      : "./bin/ender-builder.js"
     }
-  , "preferGlobal": true
-  , "scripts": {
-        "test"        : "make alltests"
-    }
-  , "repository": {
-        "type"        : "git"
-      , "url"         : "https://github.com/ender-js/Ender.git"
+  , "repository"      : {
+        "type"               : "git"
+      , "url"                : "https://github.com/ender-js/ender-builder.git"
     }
 }

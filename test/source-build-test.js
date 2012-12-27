@@ -23,15 +23,11 @@
  */
 
 
-var testCase = require('buster').testCase
-  , fs = require('fs')
-  , BuildParseError = require('../../lib/errors').BuildParseError
-  , UnknownMainError = require('../../lib/errors').UnknownMainError
-  , SourcePackage = require('../../lib/source-package')
-  , SourceBuild = require('../../lib/source-build')
-  , minify = require('../../lib/minify')
-  , argsParse = require('../../lib/args-parse')
-  , FilesystemError = require('../../lib/errors').FilesystemError
+var testCase      = require('buster').testCase
+  , argsParser    = require('ender-args-parser')
+  , SourcePackage = require('../lib/source-package')
+  , SourceBuild   = require('../lib/source-build')
+  , minify        = require('../lib/minify')
 
 var createExpectedHeader = function (context, packageList) {
       return [
@@ -55,9 +51,9 @@ testCase('Source build', {
         pkg.__defineGetter__('identifier', function () { return identifier }) // sinon can't mock getters
         return pkg
       }
-      this.createArgsParseMock = function (optionsArg, contextArg) {
-        var argsParseMock = this.mock(argsParse)
-        argsParseMock.expects('toContextString').withExactArgs(optionsArg).once().returns(contextArg)
+      this.createArgsParserMock = function (optionsArg, contextArg) {
+        var argsParserMock = this.mock(argsParser)
+        argsParserMock.expects('toContextString').withExactArgs(optionsArg).once().returns(contextArg)
       }
     }
 
@@ -79,7 +75,7 @@ testCase('Source build', {
                 + pkg3Content
             , mockMinify = this.mock(minify)
 
-          this.createArgsParseMock(optionsArg, contextArg)
+          this.createArgsParserMock(optionsArg, contextArg)
           srcBuild.addPackage(pkg1)
           srcBuild.addPackage(pkg2)
           srcBuild.addPackage(pkg3)
@@ -111,7 +107,7 @@ testCase('Source build', {
             , minifiedSource = 'this is minified, these are not the droids you are looking for'
             , mockMinify = this.mock(minify)
 
-          this.createArgsParseMock(optionsArg, contextArg)
+          this.createArgsParserMock(optionsArg, contextArg)
           srcBuild.addPackage(pkg1)
           srcBuild.addPackage(pkg2)
           srcBuild.addPackage(pkg3)
@@ -142,7 +138,7 @@ testCase('Source build', {
                 + '\n\n}.call({});'
             , mockMinify = this.mock(minify)
 
-          this.createArgsParseMock(optionsArg, contextArg)
+          this.createArgsParserMock(optionsArg, contextArg)
           srcBuild.addPackage(pkg1)
           srcBuild.addPackage(pkg2)
           srcBuild.addPackage(pkg3)
@@ -173,7 +169,7 @@ testCase('Source build', {
             , minifiedSource = 'this is minified, these are not the droids you are looking for'
             , mockMinify = this.mock(minify)
 
-          this.createArgsParseMock(optionsArg, contextArg)
+          this.createArgsParserMock(optionsArg, contextArg)
           srcBuild.addPackage(pkg1)
           srcBuild.addPackage(pkg2)
           srcBuild.addPackage(pkg3)
@@ -193,160 +189,6 @@ testCase('Source build', {
           srcBuild.asString({ type: 'minified' }, function (err, actual) {
             refute(err)
             assert.equals(actual, minifiedSource)
-            done()
-          })
-        }
-    }
-
-  , 'parseContext': {
-        'test simple old-skool parse': function (done) {
-          var content = ''
-                + '/*!\n'
-                + '  * =============================================================\n'
-                + '  * Ender: open module JavaScript framework (https://ender.no.de)\n'
-                + '  * Build: ender build foo bar baz --use blah --sandbox foo\n'
-                + '  * =============================================================\n'
-                + '  */\n\n'
-                + arguments.callee.toString()
-
-            , expectedOptions = {
-                  main: 'build'
-                , packages: [ 'foo', 'bar', 'baz' ]
-                , use: 'blah'
-                , sandbox: [ 'foo' ]
-              }
-            , filename = 'somefile'
-            , mockFs = this.mock(fs)
-            , fdArg = 99
-
-          mockFs.expects('open').withArgs(filename, 'r').callsArgWith(2, null, fdArg)
-          mockFs.expects('read').withArgs(fdArg).callsArgWith(5, null, 1, new Buffer(content))
-
-          SourceBuild.parseContext(filename, function (err, options, packages) {
-            refute(err)
-            refute(packages)
-            assert.equals(options, expectedOptions)
-            done()
-          })
-        }
-
-      , 'test simple new-style parse': function (done) {
-          var expectedPackages = 'ender-js@0.3.7 bean@0.4.9 qwery@3.3.3 bonzo@1.0.1 domready@0.2.11 bowser@0.1.0'.split(' ')
-            , content = ''
-                + '/*!\n'
-                + '  * =============================================================\n'
-                + '  * Ender: open module JavaScript framework (https://ender.no.de)\n'
-                + '  * Build: ender build foo bar baz --use blah --sandbox foo\n'
-                + '  * Packages: ' + expectedPackages.join(' ') + '\n'
-                + '  * =============================================================\n'
-                + '  */\n\n'
-                + arguments.callee.toString()
-
-            , expectedOptions = {
-                  main: 'build'
-                , packages: [ 'foo', 'bar', 'baz' ]
-                , use: 'blah'
-                , sandbox: [ 'foo' ]
-              }
-            , filename = 'somefile'
-            , mockFs = this.mock(fs)
-            , fdArg = 99
-
-          mockFs.expects('open').withArgs(filename, 'r').callsArgWith(2, null, fdArg)
-          mockFs.expects('read').withArgs(fdArg).callsArgWith(5, null, 1, new Buffer(content))
-
-          SourceBuild.parseContext(filename, function (err, options, packages) {
-            refute(err)
-            assert.equals(options, expectedOptions)
-            assert.equals(packages, expectedPackages)
-            done()
-          })
-        }
-
-      , 'test bad build parse (bad ender spec)': function (done) {
-          var content = ''
-                + '/*!\n'
-                + '  * =============================================================\n'
-                + '  * Ender: open module JavaScript framework (https://ender.no.de)\n'
-                + '  * Build: ender not a real build command\n'
-                + '  * =============================================================\n'
-                + '  */\n\n'
-                + arguments.callee.toString()
-
-            , filename = 'somefile'
-            , mockFs = this.mock(fs)
-            , fdArg = 99
-
-          mockFs.expects('open').withArgs(filename, 'r').callsArgWith(2, null, fdArg)
-          mockFs.expects('read').withArgs(fdArg).callsArgWith(5, null, 1, new Buffer(content))
-
-          SourceBuild.parseContext(filename, function (err, options, packages) {
-            assert(err)
-            refute(options)
-            refute(packages)
-            assert.equals(err.name, 'BuildParseError')
-            assert(err.cause)
-            assert(err.cause instanceof UnknownMainError)
-            assert.equals(err.cause.name, 'UnknownMainError')
-            done()
-          })
-        }
-
-      , 'test bad build parse (not an ender file)': function (done) {
-          var content = arguments.callee.toString()
-            , filename = 'somefile'
-            , mockFs = this.mock(fs)
-            , fdArg = 99
-
-          mockFs.expects('open').withArgs(filename, 'r').callsArgWith(2, null, fdArg)
-          mockFs.expects('read').withArgs(fdArg).callsArgWith(5, null, 1, new Buffer(content))
-          mockFs.expects('close').withArgs(fdArg).callsArg(1)
-
-          SourceBuild.parseContext(filename, function (err, options, packages) {
-            assert(err)
-            refute(options)
-            refute(packages)
-            assert(err instanceof BuildParseError)
-            assert.equals(err.name, 'BuildParseError')
-            refute(err.cause)
-            done()
-          })
-        }
-
-      , 'test no such file error': function (done) {
-          var filename = 'somefile'
-            , mockFs = this.mock(fs)
-            , errArg = new Error('this is an error')
-
-          mockFs.expects('open').withArgs(filename, 'r').callsArgWith(2, errArg)
-
-          SourceBuild.parseContext(filename, function (err, options, packages) {
-            assert(err)
-            refute(options)
-            refute(packages)
-            assert(err instanceof FilesystemError)
-            assert.same(err.cause, errArg)
-            assert.same(err.message, errArg.message)
-            done()
-          })
-        }
-
-      , 'test file read error': function (done) {
-          var filename = 'somefile'
-            , mockFs = this.mock(fs)
-            , errArg = new Error('this is an error')
-            , fdArg = 99
-
-          mockFs.expects('open').withArgs(filename, 'r').callsArgWith(2, null, fdArg)
-          mockFs.expects('read').withArgs(fdArg).callsArgWith(5, errArg)
-
-          SourceBuild.parseContext(filename, function (err, options, packages) {
-            assert(err)
-            refute(options)
-            refute(packages)
-            assert(err instanceof FilesystemError)
-            assert.same(err.cause, errArg)
-            assert.same(err.message, errArg.message)
             done()
           })
         }

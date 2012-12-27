@@ -27,13 +27,13 @@ var testCase        = require('buster').testCase
   , fs              = require('fs')
   , path            = require('path')
   , async           = require('async')
-  , SourcePackage   = require('../../lib/source-package')
-  , FilesystemError = require('../../lib/errors').FilesystemError
+  , SourcePackage   = require('../lib/source-package')
+  , FilesystemError = require('errno').custom.FilesystemError
 
   , templateFiles = {
-        'standard' : path.join(__dirname, '/../../resources/source-package.mustache')
-      , 'root'     : path.join(__dirname, '/../../resources/root-package.mustache')
-      , 'file'     : path.join(__dirname, '/../../resources/source-file.mustache')
+        'standard' : path.join(__dirname, '/../resources/source-package.mustache')
+      , 'client'   : path.join(__dirname, '/../resources/client-package.mustache')
+      , 'file'     : path.join(__dirname, '/../resources/source-file.mustache')
     }
   , templateFileContents
 
@@ -55,7 +55,7 @@ testCase('Source package', {
         // options: expectedFileReads, fileContents, readDelays, parents, pkg, json, expectedResult
 
         var fsMock   = this.mock(fs)
-          , tmplType = options.json.name == 'ender-js' ? 'root' : 'standard'
+          , tmplType = options.json.name == 'ender-js' ? 'client' : 'standard'
           , srcPkg
 
         options.expectedFileReads.forEach(function (file, index) {
@@ -91,7 +91,7 @@ testCase('Source package', {
         srcPkg = SourcePackage.create(
             options.pkg
           , options.parents || []
-          , tmplType == 'root'
+          , tmplType == 'client'
           , options.json
           , options.options || {}
         )
@@ -126,7 +126,7 @@ testCase('Source package', {
       if (!templateFileContents) {
         // unfortunately we have to mock this out as we're mocking out the whole `fs`
         async.map(
-            [ 'standard', 'root', 'file' ]
+            [ 'standard', 'client', 'file' ]
           , function (type, callback) {
               fs.readFile(templateFiles[type], 'utf8', callback)
             }
@@ -135,7 +135,7 @@ testCase('Source package', {
                 throw err
               templateFileContents = {
                   'standard' : templates[0]
-                , 'root'     : templates[1]
+                , 'client'   : templates[1]
                 , 'file'     : templates[2]
               }
               done()
@@ -542,7 +542,7 @@ testCase('Source package', {
       }, done)
     }
 
-  , 'test sandbox option for root package (ender-js)': function (done) {
+  , 'test sandbox option for client package (ender-js)': function (done) {
       this.runAsStringTest({
           expectedFileReads: [ './foobar/main.js' ]
         , fileContents: [ 'main\nsource\ncontents\n' ]

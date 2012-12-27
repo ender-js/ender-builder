@@ -1,49 +1,40 @@
-#Ender 1.0 - work in progress - developer notes
+# Ender Builder [![Build Status](https://secure.travis-ci.org/ender-js/ender-builder.png)](http://travis-ci.org/ender-js/ender-builder)
 
-Architecture notes can be found in *lib/README.md*.
+A component of the [Ender CLI](https://github.com/ender-js/Ender/) but can also be used as a stand-alone tool to assemble Ender builds.
 
-This branch won't be deployed to npm until it's ready for a 1.0 release. Use `npm link` to install your local repo as the global *ender* package.
+Ender Builder is responsible for bundling up all required packages and their dependencies into a single *ender.js* file (and its associated *ender.min.js* file). It does not install packages, that is left up to the main Ender CLI. It expects to find the packages it needs in the *node_modules* directory.
 
-What does *ready* mean? We haven't quite pinned that down yet, but we'll get there!
+Ender Builder isn't responsible for including the "client lib" (*ender-js*) in the list of packages to be bundled, that is left up to the main Ender CLI before deferring the build to Ender Builder.
 
-Use `npm install` to install both the dependencies and the devDependencies, otherwise you won't be able to run the executable (in *bin/ender*) or run the tests (using the Makefile).
+Ender Builder uses [ender-minify](https://github.com/ender-js/ender-minify) for build minification so it understands `--minifier` / `options.minifier`.
 
-Unit tests can be invoked by running a `make` or `make unittests`. Functional tests take longer to run as they check out packages from npm and can be invoked by running a `make functionaltests`. All types of tests can be run with `make alltests`--**this must be done before any pull-request and must all pass**.
+## Executable
 
-Tests use BusterJS, you can read more about it [here](http://busterjs.org/). Buster has integrated support for Sinon for mocking and stubbing, you can read more about it [here](http://sinonjs.org/). Note that Buster is still in Beta and may occasionally break. Bug @augustl or @cjno about that.
+If you install with `npm install ender-builder -g` then you'll get an `ender-builder` executable that you can use to build *ender.js* files given a list of packages that already exist in the *node_modules* directory (remember to include *ender-js* if you need it).
 
-Feel free to open an issue on GitHub if you would like to discuss something or want support of some kind. Alternatively you can bug [@rvagg](http://twitter.com/rvagg) on Twitter or via [email](mailto:rod@vagg.org).
+```sh
+$ ender-builder ender-js bonzo bean traversty --output winning.js
+```
 
-## Some behavioural differences from 0.8.x
+## About Ender
 
-This branch should do everything that the current 0.8.x branch does, with some additions:
+For more information check out [http://ender.jit.su](http://ender.jit.su)
 
- * Some of the output to stdout will be different. Mostly minor wording changes but also the `ender info` output is included in each *build*, *add* and *remove*.
- * Packages are properly ordered (*!!*). Your *ender.js* will contain the packages you requested *in the order you requested them* on the commandline, with any dependencies placed *before* they are required.
- * *bin/ender* now gives proper exit-codes, if there is any kind of error you'll get a `1`, otherwise a `0`.
- * The `"ender"` key in *package.json* supports an array of files to concatenate to form the bridge.
- * A new `--client-lib` argument can be used to specify an alternative to the default *ender-js* package as a client lib. At the moment a client lib still needs to conform to the basics of the `$` + CommonJS pattern in order to support existing Ender packages.
+## API
 
-------------
+### enderBuilder(options, packages, dependencyGraph, callback)
+Ender Builder exports a single function. You must provide it with a standarrd Ender `options` object (which can be obtained from [ender-args-parser](https://github.com/ender-js/ender-args-parser)), an array of `packages` (which is available on `options.packages` if you are parsing the command line), a `DependencyGraph` object (obtained from [ender-dependency-graph](https://github.com/ender-js/ender-dependency-graph)) and a `callback` function to be notified when building is finished.
 
-#ENDER [![Build Status](https://secure.travis-ci.org/ender-js/Ender.png)](http://travis-ci.org/ender-js/Ender)
+-------------------------
 
-**Ender is a full featured package manager for your browser.**<br/>
-It allows you to search, install, manage, and compile front-end javascript packages and their dependencies for the web. We like to think of it as [NPM](https://github.com/isaacs/npm)'s little sister.
+## Contributing
 
-**Ender is not a JavaScript library**.<br/>
-It's not a jQuery replacement. It's not even a static asset. It's a tool for making the consumption of front-end javascript packages dead simple and incredibly powerful.
+Contributions are more than welcome! Just fork and submit a GitHub pull request! If you have changes that need to be synchronized across the various Ender CLI repositories then please make that clear in your pull requests.
 
-![Ender](http://f.cl.ly/items/1W0P3I3D3m3U0e1j2h1c/Screen%20shot%202011-05-09%20at%2011.31.42%20AM.png)
+### Tests
 
-## WHY?
+Ender Builder uses [Buster](http://busterjs.org) for unit testing. You'll get it (and a bazillion unnecessary dependencies) when you `npm install` in your cloned local repository. Simply run `npm test` to run the test suite.
 
-In the browser - **small, loosely coupled modules are the future and large, tightly-bound monolithic libraries are the past!**
+## Licence
 
-Ender capitalizes on this by offering a unique way to bring together the exciting work happening in javascript packages and allows you to mix, match, and customize your own build, suited to your individual needs, without all the extra cruft that comes with larger libraries.
-
-With Ender, if one library goes bad or unmaintained, it can be replaced with another. Need a specific package version? No problem! Does your package have dependencies? Let us handle that for you too!
-
-## MORE INFO
-
-For more information checkout [http://ender.no.de](http://ender.no.de)
+*Ender Builder* is Copyright (c) 2012 [@rvagg](https://github.com/rvagg), [@ded](https://github.com/ded), [@fat](https://github.com/fat) and other contributors. It is licenced under the MIT licence. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE file for more details.
