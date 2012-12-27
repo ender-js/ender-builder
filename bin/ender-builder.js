@@ -16,7 +16,7 @@ DependencyGraph(options, options.packages, function (err, dependencyGraph) {
   if (!options.silent)
     console.log(DependencyGraph.archyTree(options.packages, dependencyGraph, true))
 
-  builder(options, options.packages, dependencyGraph, function (err) {
+  builder(options, options.packages, dependencyGraph, function (err, filename) {
     if (err) throw err
   })
 })

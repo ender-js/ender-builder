@@ -25,6 +25,8 @@ For more information check out [http://ender.jit.su](http://ender.jit.su)
 ### enderBuilder(options, packages, dependencyGraph, callback)
 Ender Builder exports a single function. You must provide it with a standarrd Ender `options` object (which can be obtained from [ender-args-parser](https://github.com/ender-js/ender-args-parser)), an array of `packages` (which is available on `options.packages` if you are parsing the command line), a `DependencyGraph` object (obtained from [ender-dependency-graph](https://github.com/ender-js/ender-dependency-graph)) and a `callback` function to be notified when building is finished.
 
+The callback signature is: `function (err, filename)` where `filename` is the name of the unminified file, usually *ender.js*.
+
 -------------------------
 
 ## Contributing
