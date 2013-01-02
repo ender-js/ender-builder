@@ -661,4 +661,27 @@ testCase('Source package', {
           ] })
         }
     }
+
+  , 'packageRoot': {
+        'standard package': function () {
+          var pkg  = SourcePackage.create('whatevs', [ 'boom', 'bang' ], false, Object.create({ name: 'whatevs', main: './main.js', externs: [ 'lib/foo.js', 'BOOM.js' ] }), {})
+          assert.equals(pkg.packageRoot, path.resolve('node_modules/boom/node_modules/bang/node_modules/whatevs/'))
+        }
+
+      , 'package installed from path': function () {
+          var pkg  = SourcePackage.create('/foo/bar/whatevs', [], false, Object.create({ name: 'whatevs', main: './main.js', externs: [ 'lib/foo.js', 'BOOM.js' ] }), {})
+          assert.equals(pkg.packageRoot, path.resolve('node_modules/whatevs/'))
+        }
+
+      , 'cwd package': function () {
+          var pkg  = SourcePackage.create('./', [], false, Object.create({ name: 'whatevs', main: './main.js', externs: [ 'lib/foo.js', 'BOOM.js' ] }), {})
+          assert.equals(pkg.packageRoot, path.resolve('.'))
+
+          var pkg  = SourcePackage.create('.', [], false, Object.create({ name: 'whatevs', main: './main.js', externs: [ 'lib/foo.js', 'BOOM.js' ] }), {})
+          assert.equals(pkg.packageRoot, path.resolve('.'))
+
+          var pkg  = SourcePackage.create('foo/..', [], false, Object.create({ name: 'whatevs', main: './main.js', externs: [ 'lib/foo.js', 'BOOM.js' ] }), {})
+          assert.equals(pkg.packageRoot, path.resolve('.'))
+        }
+    }
 })
