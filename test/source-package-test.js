@@ -112,7 +112,7 @@ testCase('Source package', {
         src += '(function () {\n\n  var module = { exports: {} }, exports = module.exports;\n'
         if (options.main)
           src += '\n' + options.main
-        src += '\n  provide("' + options.name + '", module.exports);'
+        src += '\n  if (typeof provide == \'function\') provide("' + options.name + '", module.exports);'
         if (options.sandbox)
           src += '\n\n  window["' + options.name + '"] = module.exports;'
         if (options.ender)
@@ -167,7 +167,7 @@ testCase('Source package', {
                   + '  1\n'
                   + '  2\n'
                   + '  3\n\n'
-                  + '  provide("foobar", module.exports);\n'
+                  + '  if (typeof provide == \'function\') provide("foobar", module.exports);\n'
                   + '  $.ender(module.exports);\n'
                   + '}());'
               )
@@ -184,7 +184,7 @@ testCase('Source package', {
                   })
                 ,   '(function () {\n\n'
                   + '  var module = { exports: {} }, exports = module.exports;\n\n'
-                  + '  provide("foobar", module.exports);\n\n'
+                  + '  if (typeof provide == \'function\') provide("foobar", module.exports);\n\n'
                   + '  this is a test\n\n'
                   + '  1\n'
                   + '  2\n'
@@ -211,7 +211,7 @@ testCase('Source package', {
                   + '  main\n\n'
                   + '  source\n'
                   + '  here\n\n'
-                  + '  provide("foobar", module.exports);\n\n'
+                  + '  if (typeof provide == \'function\') provide("foobar", module.exports);\n\n'
                   + '  this is a test\n\n'
                   + '  1\n'
                   + '  2\n'
