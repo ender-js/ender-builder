@@ -5,7 +5,7 @@
 {{#mainSource}}
 
 {{{indented}}}{{/mainSource}}
-  if (typeof provide == 'function') provide("{{packageName}}", module.exports);
+  if (typeof provide == "function") provide("{{packageName}}", module.exports);
 {{#options.sandbox}}
 
   window["{{packageName}}"] = module.exports;
