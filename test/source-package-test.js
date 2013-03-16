@@ -23,7 +23,9 @@
  */
 
 
-var testCase        = require('buster').testCase
+var buster          = require('bustermove')
+  , assert          = require('referee').assert
+  , refute          = require('referee').refute
   , fs              = require('fs')
   , path            = require('path')
   , async           = require('async')
@@ -37,9 +39,10 @@ var testCase        = require('buster').testCase
     }
   , templateFileContents
 
+require('./common')
 require('glob')
 
-testCase('Source package', {
+buster.testCase('Source package', {
     'setUp': function (done) {
 
       // a very hacky stub for glob, replace glob.Glob with a simple func that returns the first arg

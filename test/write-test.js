@@ -23,11 +23,12 @@
  */
 
 
-var buster = require('buster')
-  , assert = buster.assert
-  , fs = require('fs')
-  , SourceBuild = require('../lib/source-build')
-  , write = require('../lib/write')
+var buster          = require('bustermove')
+  , assert          = require('referee').assert
+  , refute          = require('referee').refute
+  , fs              = require('fs')
+  , SourceBuild     = require('../lib/source-build')
+  , write           = require('../lib/write')
   , FilesystemError = require('errno').custom.FilesystemError
 
 buster.testCase('Write', {

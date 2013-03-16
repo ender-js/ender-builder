@@ -24,12 +24,14 @@
       , "glob"               : "~3.1.14"
     }
   , "devDependencies" : {
-        "buster"             : "~0.6.12"
-      , "require-subvert"    : "~0.0.0"
-      , "mkfiletree"         : "~0.0.0"
+        "bustermove"         : "*"
+      , "referee"            : "*"
+      , "tap"                : "*"
+      , "require-subvert"    : "*"
+      , "mkfiletree"         : "*"
     }
   , "scripts"         : {
-        "test"               : "./node_modules/.bin/buster-test"
+        "test"               : "tap test/*-test.js"
     }
   , "bin"             : {
         "ender-builder"      : "./bin/ender-builder.js"

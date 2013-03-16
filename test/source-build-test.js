@@ -23,11 +23,15 @@
  */
 
 
-var testCase      = require('buster').testCase
+var buster        = require('bustermove')
+  , assert        = require('referee').assert
+  , refute        = require('referee').refute
   , argsParser    = require('ender-args-parser')
   , SourcePackage = require('../lib/source-package')
   , SourceBuild   = require('../lib/source-build')
   , minify        = require('../lib/minify')
+
+require('./common')
 
 var createExpectedHeader = function (context, packageList) {
       return [
@@ -41,7 +45,7 @@ var createExpectedHeader = function (context, packageList) {
       ].join('\n') + '\n\n'
     }
 
-testCase('Source build', {
+buster.testCase('Source build', {
     'setUp': function () {
       this.createPackageMock = function (content, identifier) {
         var pkg = SourcePackage.create()

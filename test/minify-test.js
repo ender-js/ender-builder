@@ -23,9 +23,12 @@
  */
 
 
-var buster         = require('buster')
-  , assert         = buster.assert
+var buster    = require('bustermove')
+  , assert    = require('referee').assert
+  , refute    = require('referee').refute
   , requireSubvert = require('require-subvert')(__dirname)
+
+require('./common')
 
 buster.testCase('Minify', {
     'setUp': function () {

@@ -23,14 +23,18 @@
  */
 
 
-var testCase        = require('buster').testCase
+var buster    = require('bustermove')
+  , assert    = require('referee').assert
+  , refute    = require('referee').refute
   , DependencyGraph = require('ender-dependency-graph')
   , SourcePackage   = require('../lib/source-package')
   , SourceBuild     = require('../lib/source-build')
   , write           = require('../lib/write')
   , build           = require('../')
 
-testCase('Build', {
+require('./common')
+
+buster.testCase('Build', {
     // OK, this is a bit of a mess, more of an integration test, but it tests the ful
     // build process and that it calls everything we expect it to
     'test standard main-build interaction': function (done) {

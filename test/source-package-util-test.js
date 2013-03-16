@@ -23,15 +23,15 @@
  */
 
 
-var testCase          = require('buster').testCase
-  , fs                = require('fs')
+var buster            = require('bustermove')
+  , assert            = require('referee').assert
+  , refute            = require('referee').refute
   , path              = require('path')
-  , async             = require('async')
   , mkfiletree        = require('mkfiletree')
   , sourcePackageUtil = require('../lib/source-package-util')
 
 
-testCase('Source package util', {
+buster.testCase('Source package util', {
     'tearDown': function (done) {
       mkfiletree.cleanUp(done)
     }
