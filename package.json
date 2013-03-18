@@ -1,7 +1,7 @@
 {
     "name"            : "ender-builder"
   , "description"     : "Build assembler for the Ender CLI"
-  , "version"         : "0.0.4"
+  , "version"         : "0.0.5"
   , "authors"         : [
         "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
       , "Dustin Diaz @ded <dustin@obvious.com> (https://github.com/ded)"
@@ -12,13 +12,12 @@
   , "homepage"        : "https://ender.jit.su"
   , "dependencies"    : {
 
-        "ender-package-util"     : "~0.0.0"
-      , "ender-minify"           : "~0.1.0"
-      , "ender-args-parser"      : "~0.0.1"
-      , "ender-dependency-graph" : "~0.0.1"
-      , "ender-args-parser"      : "~0.0.1"
+        "ender-package-util"     : "~0.0.1"
+      , "ender-minify"           : "~0.1.1"
+      , "ender-args-parser"      : "~0.0.2"
+      , "ender-dependency-graph" : "~0.0.2"
 
-      , "errno"       : "~0.0.3"
+      , "errno"              : "~0.0.3"
       , "async"              : "~0.1.22"
       , "hogan.js"           : "~2.0.0"
       , "glob"               : "~3.1.14"
