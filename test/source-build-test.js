@@ -27,9 +27,11 @@ var buster        = require('bustermove')
   , assert        = require('referee').assert
   , refute        = require('referee').refute
   , argsParser    = require('ender-args-parser')
+  , assemble      = require('../lib/assemble')
   , SourcePackage = require('../lib/source-package')
   , SourceBuild   = require('../lib/source-build')
   , minify        = require('../lib/minify')
+  , path          = require('path')
 
 require('./common')
 
@@ -47,111 +49,62 @@ var createExpectedHeader = function (context, packageList) {
 
 buster.testCase('Source build', {
     'setUp': function () {
-      this.createPackageMock = function (content, identifier) {
-        var pkg = SourcePackage.create()
-          , pkgMock = this.mock(pkg)
-
-        pkgMock.expects('asString').once().callsArgWith(0, null, content)
-        pkg.__defineGetter__('identifier', function () { return identifier }) // sinon can't mock getters
+      this.createPackageMock = function (name, parents, descriptor, options) {
+        var pkg = SourcePackage.create(name, parents, descriptor, options)
+        this.mock(pkg).expects('loadSources').once().callsArgWith(0, null)
+        
+        // sinon can't mock getters
+        pkg.__defineGetter__('root', function () {
+          return path.resolve(path.join('.', 'node_modules', name))
+        })
+        
         return pkg
-      }
-      this.createArgsParserMock = function (optionsArg, contextArg) {
-        var argsParserMock = this.mock(argsParser)
-        argsParserMock.expects('toContextString').withExactArgs(optionsArg).once().returns(contextArg)
       }
     }
 
   , 'asString': {
         'plain': function (done) {
-          var pkg1Content = 'package 1\ncontents'
-            , pkg1 = this.createPackageMock(pkg1Content, "pkg1@0.1.1")
-            , pkg2Content = 'package 2\n\ncontents'
-            , pkg2 = this.createPackageMock(pkg2Content, "pkg2@1.1.1")
-            , pkg3Content = 'package 3\n\ncontents\nright\nhere\n'
-            , pkg3 = this.createPackageMock(pkg3Content, "pkg3@1.2.3")
+          var pkg1 = this.createPackageMock('pkg1')
+            , pkg2 = this.createPackageMock('pkg2')
+            , pkg3 = this.createPackageMock('pkg3')
             , optionsArg = { options: 1 }
             , srcBuild = SourceBuild.create(optionsArg)
-            , contextArg = 'some context here & don\'t escape <this>'
-            , plainSource =
-                  createExpectedHeader(contextArg, "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3")
-                + pkg1Content + '\n\n'
-                + pkg2Content + '\n\n'
-                + pkg3Content
             , mockMinify = this.mock(minify)
-
-          this.createArgsParserMock(optionsArg, contextArg)
+            , mockAssemble = this.mock(assemble)
+          
           srcBuild.addPackage(pkg1)
           srcBuild.addPackage(pkg2)
           srcBuild.addPackage(pkg3)
-
+          
+          mockAssemble.expects('assemble').once().withArgs(optionsArg, srcBuild.packages).callsArgWith(2, null, 'unminified')
           mockMinify.expects('minify').never()
 
           srcBuild.asString({ type: 'plain' }, function (err, actual) {
             refute(err)
-            assert.equals(actual, plainSource)
+            assert.equals(actual, 'unminified')
             done()
           })
         }
 
       , 'minify': function (done) {
-          var pkg1Content = 'package 1\ncontents'
-            , pkg1 = this.createPackageMock(pkg1Content, "pkg1@0.1.1")
-            , pkg2Content = 'package 2\n\ncontents'
-            , pkg2 = this.createPackageMock(pkg2Content, "pkg2@1.1.1")
-            , pkg3Content = 'package 3\n\ncontents\nright\nhere\n'
-            , pkg3 = this.createPackageMock(pkg3Content, "pkg3@1.2.3")
+          var pkg1 = this.createPackageMock('pkg1')
+            , pkg2 = this.createPackageMock('pkg2')
+            , pkg3 = this.createPackageMock('pkg3')
             , optionsArg = { options: 1 }
             , srcBuild = SourceBuild.create(optionsArg)
-            , contextArg = 'some minified context here & don\'t escape <this>'
-            , plainSource =
-                  createExpectedHeader(contextArg, "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3")
-                + pkg1Content + '\n\n'
-                + pkg2Content + '\n\n'
-                + pkg3Content
-            , minifiedSource = 'this is minified, these are not the droids you are looking for'
             , mockMinify = this.mock(minify)
+            , mockAssemble = this.mock(assemble)
 
-          this.createArgsParserMock(optionsArg, contextArg)
           srcBuild.addPackage(pkg1)
           srcBuild.addPackage(pkg2)
           srcBuild.addPackage(pkg3)
 
-          mockMinify.expects('minify').once().withArgs(optionsArg, plainSource).callsArgWith(2, null, minifiedSource)
+          mockAssemble.expects('assemble').once().withArgs(optionsArg, srcBuild.packages).callsArgWith(2, null, 'unminified')
+          mockMinify.expects('minify').once().withArgs(optionsArg, 'unminified').callsArgWith(2, null, 'minified')
 
           srcBuild.asString({ type: 'minified' }, function (err, actual) {
             refute(err)
-            assert.equals(actual, minifiedSource)
-            done()
-          })
-        }
-
-      , 'sandboxed': function (done) {
-          var pkg1Content = 'package 1\ncontents'
-            , pkg1 = this.createPackageMock(pkg1Content, "pkg1@0.1.1")
-            , pkg2Content = 'package 2\n\ncontents'
-            , pkg2 = this.createPackageMock(pkg2Content, "pkg2@1.1.1")
-            , pkg3Content = 'package 3\n\ncontents\nright\nhere\n'
-            , pkg3 = this.createPackageMock(pkg3Content, "pkg3@1.2.3")
-            , optionsArg = { sandbox: [ 'foo', 'bar' ] }
-            , srcBuild = SourceBuild.create(optionsArg)
-            , contextArg = 'some context here & don\'t escape <this>'
-            , plainSource =
-                  createExpectedHeader(contextArg, "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3")
-                + '!function () {\n\n'
-                + pkg1Content + '\n\n' + pkg2Content + '\n\n' + pkg3Content
-                + '\n\n}.call({});'
-            , mockMinify = this.mock(minify)
-
-          this.createArgsParserMock(optionsArg, contextArg)
-          srcBuild.addPackage(pkg1)
-          srcBuild.addPackage(pkg2)
-          srcBuild.addPackage(pkg3)
-
-          mockMinify.expects('minify').never()
-
-          srcBuild.asString({ type: 'plain' }, function (err, actual) {
-            refute(err)
-            assert.equals(actual, plainSource)
+            assert.equals(actual, 'minified')
             done()
           })
         }
@@ -160,20 +113,15 @@ buster.testCase('Source build', {
         // each of the packages, this allows for packages to add on options such as 'externs'
         // which are passed to the minifier
       , 'minify extends options for each package (externs)': function (done) {
-          var pkg1 = this.createPackageMock('p1', "pkg1@0.1.1")
-            , pkg2 = this.createPackageMock('p2', "pkg2@1.1.1")
-            , pkg3 = this.createPackageMock('p3', "pkg3@1.2.3")
+          var pkg1 = this.createPackageMock('pkg1')
+            , pkg2 = this.createPackageMock('pkg2')
+            , pkg3 = this.createPackageMock('pkg3')
             , optionsArg = { options: 1, externs: [ 'extern0' ] }
             , expectedOptionsArg
             , srcBuild = SourceBuild.create(optionsArg)
-            , contextArg = 'some minified context here & don\'t escape <this>'
-            , plainSource =
-                  createExpectedHeader(contextArg, "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3")
-                + 'p1\n\np2\n\np3'
-            , minifiedSource = 'this is minified, these are not the droids you are looking for'
             , mockMinify = this.mock(minify)
+            , mockAssemble = this.mock(assemble)
 
-          this.createArgsParserMock(optionsArg, contextArg)
           srcBuild.addPackage(pkg1)
           srcBuild.addPackage(pkg2)
           srcBuild.addPackage(pkg3)
@@ -188,13 +136,31 @@ buster.testCase('Source build', {
           }
           expectedOptionsArg = { options: 1, externs: [ 'extern0', 'extern1', 'extern2', 'extern3' ] }
 
-          mockMinify.expects('minify').once().withArgs(expectedOptionsArg, plainSource).callsArgWith(2, null, minifiedSource)
+          mockAssemble.expects('assemble').once().withArgs(optionsArg, srcBuild.packages).callsArgWith(2, null, 'unminified')
+          mockMinify.expects('minify').once().withArgs(expectedOptionsArg, 'unminified').callsArgWith(2, null, 'minified')
 
           srcBuild.asString({ type: 'minified' }, function (err, actual) {
             refute(err)
-            assert.equals(actual, minifiedSource)
+            assert.equals(actual, 'minified')
             done()
           })
+        }
+    }
+    
+  , 'addPackage': {
+        'bare package ordering': function (done) {
+          var pkg1 = this.createPackageMock('pkg1')
+            , pkg2 = this.createPackageMock('pkg2', null, { bare: true })
+            , pkg3 = this.createPackageMock('pkg3', null, { bare: true })
+            , optionsArg = { options: 1 }
+            , srcBuild = SourceBuild.create(optionsArg)
+        
+          srcBuild.addPackage(pkg1)
+          srcBuild.addPackage(pkg2)
+          srcBuild.addPackage(pkg3)
+        
+          assert.equals(srcBuild.packages, [ pkg2, pkg3, pkg1 ])
+          done()
         }
     }
 })

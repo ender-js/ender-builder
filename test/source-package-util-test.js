@@ -49,7 +49,7 @@ buster.testCase('Source package util', {
                   refute(err)
                   assert.equals(
                       contents
-                    , [ { file: path.join(dir, 'foo.js'), contents: 'fooish!' } ]
+                    , [ { file: 'foo.js', contents: 'fooish!' } ]
                   )
                   done()
                 })
@@ -67,7 +67,7 @@ buster.testCase('Source package util', {
                   refute(err)
                   assert.equals(
                       contents
-                    , [ { file: path.join(dir, 'foo.js'), contents: 'fooish!' } ]
+                    , [ { file: 'foo.js', contents: 'fooish!' } ]
                   )
                   done()
                 })
@@ -94,11 +94,11 @@ buster.testCase('Source package util', {
                   assert.equals(
                       contents
                     , [
-                          { file: path.join(dir, 'bar/bang.js'), contents: 'bang!' }
-                        , { file: path.join(dir, 'bar/baz.js'), contents: 'baz!' }
-                        , { file: path.join(dir, 'bar/boo/1.js'), contents: 'boo!!' }
-                        , { file: path.join(dir, 'bar/boo/2.js'), contents: 'boo!!!' }
-                        , { file: path.join(dir, 'foo.js'), contents: 'fooish!' }
+                          { file: 'bar/bang.js', contents: 'bang!' }
+                        , { file: 'bar/baz.js', contents: 'baz!' }
+                        , { file: 'bar/boo/1.js', contents: 'boo!!' }
+                        , { file: 'bar/boo/2.js', contents: 'boo!!!' }
+                        , { file: 'foo.js', contents: 'fooish!' }
                       ]
                   )
                   done()
@@ -123,13 +123,14 @@ buster.testCase('Source package util', {
 
                 sourcePackageUtil.loadFiles(dir, [ 'foo.js', './bar/bang.js', '/bar/boo/2.js', 'bar/baz.js' ], function (err, contents) {
                   refute(err)
+                  debugger
                   assert.equals(
                       contents
                     , [
-                          { file: path.join(dir, 'foo.js'), contents: 'fooish!' }
-                        , { file: path.join(dir, 'bar/bang.js'), contents: 'bang!' }
-                        , { file: path.join(dir, 'bar/boo/2.js'), contents: 'boo!!!' }
-                        , { file: path.join(dir, 'bar/baz.js'), contents: 'baz!' }
+                          { file: 'foo.js', contents: 'fooish!' }
+                        , { file: 'bar/bang.js', contents: 'bang!' }
+                        , { file: '/bar/boo/2.js', contents: 'boo!!!' }
+                        , { file: 'bar/baz.js', contents: 'baz!' }
                       ]
                   )
                   done()
@@ -157,8 +158,8 @@ buster.testCase('Source package util', {
                   assert.equals(
                       contents
                     , [
-                          { file: path.join(dir, 'foo.js'), contents: 'fooish!' }
-                        , { file: path.join(dir, 'bar/baz.js'), contents: 'baz!' }
+                          { file: 'foo.js', contents: 'fooish!' }
+                        , { file: 'bar/baz.js', contents: 'baz!' }
                       ]
                   )
                   done()
@@ -186,8 +187,8 @@ buster.testCase('Source package util', {
                   assert.equals(
                       contents
                     , [
-                          { file: path.join(dir, 'bar/boo/1.js'), contents: 'boo!!' }
-                        , { file: path.join(dir, 'bar/boo/2.js'), contents: 'boo!!!' }
+                          { file: 'bar/boo/1.js', contents: 'boo!!' }
+                        , { file: 'bar/boo/2.js', contents: 'boo!!!' }
                       ]
                   )
                   done()

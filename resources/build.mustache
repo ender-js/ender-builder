@@ -2,12 +2,12 @@
   * =============================================================
   * Ender: open module JavaScript framework (https://ender.no.de)
   * Build: ender {{{context}}}
-  * Packages: {{packages}}
+  * Packages: {{packageList}}
   * =============================================================
   */
 
-{{#sandbox}}!function () {
-
-{{/sandbox}}{{{source}}}{{#sandbox}}
-
-}.call({});{{/sandbox}}
+!function () {
+{{#packages}}{{> package.mustache }}{{/packages}}
+{{^sandbox}}{{#packages}}{{#isBare}}{{{bridgeSource}}}
+{{/isBare}}{{/packages}}{{/sandbox}}
+}.call({});

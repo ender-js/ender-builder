@@ -56,7 +56,7 @@ buster.testCase('Build', {
 
       SourceBuildMock.expects('create').once().withExactArgs(optionsArg).returns(sourceBuild)
       dependencyTreeArg.localizePackageList = this.stub().returns(localizedArg)
-      mockDependencyGraph.expects('getClientPackageName').once().withExactArgs(optionsArg).returns(localizedArg)
+      mockDependencyGraph.expects('getBasePackageNames').once().withExactArgs(optionsArg).returns(localizedArg)
       dependencyTreeArg.forEachUniqueOrderedDependency = this.stub()
       SourcePackageMock
         .expects('create')

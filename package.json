@@ -18,8 +18,8 @@
       , "ender-dependency-graph" : "~0.0.2"
 
       , "errno"              : "~0.0.3"
-      , "async"              : "~0.1.22"
-      , "hogan.js"           : "~2.0.0"
+      , "async"              : "~0.2.9"
+      , "mu2"                : "~0.5.17"
       , "glob"               : "~3.1.14"
     }
   , "devDependencies" : {
