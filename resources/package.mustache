@@ -1,7 +1,7 @@
 {{#isBare}}
 {{{mainSource}}}
 {{/isBare}}{{^isBare}}
-  Module.package({{{id}}}, {
+  Module.loadPackage({{{id}}}, {
 {{#sources}}{{#i}},{{/i}}
     {{{name}}}: function (module, exports, require) {
 {{{contents}}}
