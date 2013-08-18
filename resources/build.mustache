@@ -7,7 +7,6 @@
   */
 
 !function () {
-{{#packages}}{{> package.mustache }}{{/packages}}
-{{^sandbox}}{{#packages}}{{#isBare}}{{{bridgeSource}}}
+{{#packages}}{{> package.mustache }}{{/packages}}{{^sandbox}}{{#packages}}{{#isBare}}{{{bridgeSource}}}
 {{/isBare}}{{/packages}}{{/sandbox}}
 }.call({});
