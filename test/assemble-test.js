@@ -107,7 +107,7 @@ buster.testCase('Source build', {
           this.sources = files.map(function (file) {
             return {
               file: file,
-              contents: name + "/" + file + " contents\n",
+              contents: "// " + name + "/" + file + " contents\n",
               name: file.replace(/\.js?$/, '')
             }
           })
@@ -125,13 +125,6 @@ buster.testCase('Source build', {
 
       this.runAssembleTest = function (options, done) {
       
-        // this.stub(mu, 'compileAndRender', function(name, data) {
-        //   stream = new events.EventEmitter
-        // 
-        //   process.nextTick(function () { stream.emit('data', 'the compiled source') })
-        //   process.nextTick(function () { stream.emit('end') })
-        // })
-
         this.mock(argsParser)
             .expects('toContextString').withExactArgs(options.options).once()
             .returns(options.contextString)

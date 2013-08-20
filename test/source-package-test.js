@@ -97,13 +97,13 @@ buster.testCase('Source package', {
         'test (single) main-only package without .js extension': function (done) {
           this.runLoadTest({
                 expectedFileReads: [ 'node_modules/parent1/node_modules/parent2/node_modules/apkg/lib/mainsrc.js' ]
-              , fileContents: [ 'mainsrc contents' ]
+              , fileContents: [ '// mainsrc.js contents' ]
               , parents: [ 'parent1', 'parent2' ]
               , pkg: 'apkg'
               , descriptor: { name: 'apkg-name', main: 'lib/mainsrc' }
               , expectedResult: {
                   sources: [
-                      { file: 'lib/mainsrc.js', name: 'lib/mainsrc', contents: 'mainsrc contents' }
+                      { file: 'lib/mainsrc.js', name: 'lib/mainsrc', contents: '// mainsrc.js contents' }
                   ]
                 }
             },  done)
@@ -112,13 +112,13 @@ buster.testCase('Source package', {
       , 'test (single) main-only package with .js extension': function (done) {
           this.runLoadTest({
                 expectedFileReads: [ 'node_modules/parent1/node_modules/parent2/node_modules/apkg/lib/mainsrc.js' ]
-              , fileContents: [ 'mainsrc.js contents' ]
+              , fileContents: [ '// mainsrc.js contents' ]
               , parents: [ 'parent1', 'parent2' ]
               , pkg: 'apkg'
               , descriptor: { name: 'apkg-name', main: 'lib/mainsrc.js' }
               , expectedResult: {
                   sources: [
-                      { file: 'lib/mainsrc.js', name: 'lib/mainsrc', contents: 'mainsrc.js contents' }
+                      { file: 'lib/mainsrc.js', name: 'lib/mainsrc', contents: '// mainsrc.js contents' }
                   ]
                 }
             },  done)
@@ -134,7 +134,7 @@ buster.testCase('Source package', {
               , fileContents: [
                     'BAR!'
                   , 'BAZ!'
-                  , 'mainsrc.js contents'
+                  , '// mainsrc.js contents'
                 ]
               , pkg: 'mypkg'
               , descriptor: {
@@ -149,7 +149,7 @@ buster.testCase('Source package', {
                   sources: [
                       { file: 'lib/foo/bar.js', name: 'lib/foo/bar', contents: 'BAR!' }
                     , { file: 'lib/foo/bar/baz.js', name: 'lib/foo/bar/baz', contents: 'BAZ!' }
-                    , { file: 'lib/mainsrc.js', name: 'lib/mainsrc', contents: 'mainsrc.js contents' }
+                    , { file: 'lib/mainsrc.js', name: 'lib/mainsrc', contents: '// mainsrc.js contents' }
                   ]
                 }
             },  done)
@@ -168,7 +168,7 @@ buster.testCase('Source package', {
               , fileContents: [
                     'BAR!'
                   , 'BAZ!'
-                  , 'mainsrc.js contents'
+                  , '// mainsrc.js contents'
                 ]
               , readDelays: [ 50, 25, 10 ]
               , pkg: 'mypkg'
@@ -184,7 +184,7 @@ buster.testCase('Source package', {
                   sources: [
                       { file: 'lib/foo/bar.js', name: 'lib/foo/bar', contents: 'BAR!' }
                     , { file: 'lib/foo/bar/baz.js', name: 'lib/foo/bar/baz', contents: 'BAZ!' }
-                    , { file: 'lib/mainsrc.js', name: 'lib/mainsrc', contents: 'mainsrc.js contents' }
+                    , { file: 'lib/mainsrc.js', name: 'lib/mainsrc', contents: '// mainsrc.js contents' }
                   ]
                 }
             },  done)
@@ -195,14 +195,14 @@ buster.testCase('Source package', {
         'test ender-only package without .js extension': function (done) {
           this.runLoadTest({
                 expectedFileReads: [ 'node_modules/parent1/node_modules/parent2/node_modules/apkg/lib/endersrc.js' ]
-              , fileContents: [ 'endersrc contents' ]
+              , fileContents: [ '// endersrc.js contents' ]
               , filesMissing: [ 'index.js' ]
               , parents: [ 'parent1', 'parent2' ]
               , pkg: 'apkg'
               , descriptor: { name: 'apkg-name', bridge: 'lib/endersrc' }
               , expectedResult: {
                   sources: [
-                      { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: 'endersrc contents' }
+                      { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: '// endersrc.js contents' }
                   ]
                 }
             },  done)
@@ -211,14 +211,14 @@ buster.testCase('Source package', {
       , 'test ender-only package with .js extension': function (done) {
           this.runLoadTest({
                 expectedFileReads: [ 'node_modules/parent1/node_modules/parent2/node_modules/apkg/lib/endersrc.js' ]
-              , fileContents: [ 'endersrc.js contents' ]
+              , fileContents: [ '// endersrc.js contents' ]
               , filesMissing: [ 'index.js' ]
               , parents: [ 'parent1', 'parent2' ]
               , pkg: 'apkg'
               , descriptor: { name: 'apkg-name', bridge: 'lib/endersrc.js' }
               , expectedResult: {
                   sources: [
-                      { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: 'endersrc.js contents' }
+                      { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: '// endersrc.js contents' }
                   ]
                 }
             },  done)
@@ -234,7 +234,7 @@ buster.testCase('Source package', {
               , fileContents: [
                     'BAR!'
                   , 'BAZ!'
-                  , 'endersrc.js contents'
+                  , '// endersrc.js contents'
                 ]
               , filesMissing: [ 'index.js' ]
               , pkg: 'mypkg'
@@ -250,7 +250,7 @@ buster.testCase('Source package', {
                   sources: [
                       { file: 'lib/foo/bar.js', name: 'lib/foo/bar', contents: 'BAR!' }
                     , { file: 'lib/foo/bar/baz.js', name: 'lib/foo/bar/baz', contents: 'BAZ!' }
-                    , { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: 'endersrc.js contents' }
+                    , { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: '// endersrc.js contents' }
                   ]
                 }
             },  done)
@@ -269,7 +269,7 @@ buster.testCase('Source package', {
               , fileContents: [
                     'BAR!'
                   , 'BAZ!'
-                  , 'endersrc.js contents'
+                  , '// endersrc.js contents'
                 ]
               , filesMissing: [ 'index.js' ]
               , readDelays: [ 50, 25, 10 ]
@@ -286,7 +286,7 @@ buster.testCase('Source package', {
                   sources: [
                       { file: 'lib/foo/bar.js', name: 'lib/foo/bar', contents: 'BAR!' }
                     , { file: 'lib/foo/bar/baz.js', name: 'lib/foo/bar/baz', contents: 'BAZ!' }
-                    , { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: 'endersrc.js contents' }
+                    , { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: '// endersrc.js contents' }
                   ]
                 }
             },  done)
@@ -309,8 +309,8 @@ buster.testCase('Source package', {
               , 'BAZ!'
               , 'ENDERBAR!'
               , 'ENDERBAZ!'
-              , 'mainsrc.js contents'
-              , 'endersrc.js contents'
+              , '// mainsrc.js contents'
+              , '// endersrc.js contents'
             ]
           , readDelays: [ 50, 10, 25, 40, 10, 20 ]
           , pkg: 'mypkg'
@@ -331,8 +331,8 @@ buster.testCase('Source package', {
                 , { file: 'lib/foo/bar/baz.js', name: 'lib/foo/bar/baz', contents: 'BAZ!' }
                 , { file: 'ender/foo/bar.js', name: 'ender/foo/bar', contents: 'ENDERBAR!' }
                 , { file: 'ender/foo/bar/baz.js', name: 'ender/foo/bar/baz', contents: 'ENDERBAZ!' }
-                , { file: 'mainsrc.js', name: 'mainsrc', contents: 'mainsrc.js contents' }
-                , { file: 'endersrc.js', name: 'endersrc', contents: 'endersrc.js contents' }
+                , { file: 'mainsrc.js', name: 'mainsrc', contents: '// mainsrc.js contents' }
+                , { file: 'endersrc.js', name: 'endersrc', contents: '// endersrc.js contents' }
               ]
             }
         },  done)
@@ -343,8 +343,8 @@ buster.testCase('Source package', {
       // process once.
       var expectedResult = {
             sources: [
-                { file: 'mainsrc.js', name: 'mainsrc', contents: 'mainsrc.js contents' }
-              , { file: 'endersrc.js', name: 'endersrc', contents: 'endersrc.js contents' }
+                { file: 'mainsrc.js', name: 'mainsrc', contents: '// mainsrc.js contents' }
+              , { file: 'endersrc.js', name: 'endersrc', contents: '// endersrc.js contents' }
             ]
           }
         , srcPkg = this.runLoadTest({
@@ -353,8 +353,8 @@ buster.testCase('Source package', {
                 , 'node_modules/mypkg/endersrc.js'
               ]
             , fileContents: [
-                  'mainsrc.js contents'
-                , 'endersrc.js contents'
+                  '// mainsrc.js contents'
+                , '// endersrc.js contents'
               ]
             , readDelays: [ 25, 25 ]
             , pkg: 'mypkg'
