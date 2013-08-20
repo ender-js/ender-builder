@@ -199,7 +199,7 @@ buster.testCase('Source package', {
               , filesMissing: [ 'index.js' ]
               , parents: [ 'parent1', 'parent2' ]
               , pkg: 'apkg'
-              , descriptor: { name: 'apkg-name', ender: 'lib/endersrc' }
+              , descriptor: { name: 'apkg-name', bridge: 'lib/endersrc' }
               , expectedResult: {
                   sources: [
                       { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: 'endersrc contents' }
@@ -215,7 +215,7 @@ buster.testCase('Source package', {
               , filesMissing: [ 'index.js' ]
               , parents: [ 'parent1', 'parent2' ]
               , pkg: 'apkg'
-              , descriptor: { name: 'apkg-name', ender: 'lib/endersrc.js' }
+              , descriptor: { name: 'apkg-name', bridge: 'lib/endersrc.js' }
               , expectedResult: {
                   sources: [
                       { file: 'lib/endersrc.js', name: 'lib/endersrc', contents: 'endersrc.js contents' }
@@ -240,7 +240,7 @@ buster.testCase('Source package', {
               , pkg: 'mypkg'
               , descriptor: {
                     name: 'mypkg-name'
-                  , ender: 'lib/endersrc.js'
+                  , bridge: 'lib/endersrc.js'
                   , files: [
                         'lib/foo/bar'
                       , 'lib/foo/bar/baz'
@@ -276,7 +276,7 @@ buster.testCase('Source package', {
               , pkg: 'mypkg'
               , descriptor: {
                     name: 'mypkg-name'
-                  , ender: 'lib/endersrc.js'
+                  , bridge: 'lib/endersrc.js'
                   , files: [
                         'lib/foo/bar'
                       , 'lib/foo/bar/baz'
@@ -317,7 +317,7 @@ buster.testCase('Source package', {
           , descriptor: {
                 name: 'mypkg-name'
               , main: './mainsrc.js'
-              , ender: './endersrc'
+              , bridge: './endersrc'
               , files: [
                     'lib/foo/bar'
                   , 'lib/foo/bar/baz.js'
@@ -361,7 +361,7 @@ buster.testCase('Source package', {
             , descriptor: {
                   name: 'mypkg-name'
                 , main: './mainsrc.js'
-                , ender: './endersrc.js'
+                , bridge: './endersrc.js'
               }
             , expectedResult: expectedResult
           })
