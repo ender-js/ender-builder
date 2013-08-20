@@ -123,7 +123,6 @@ buster.testCase('Source package util', {
 
                 sourcePackageUtil.loadFiles(dir, [ 'foo.js', './bar/bang.js', '/bar/boo/2.js', 'bar/baz.js' ], function (err, contents) {
                   refute(err)
-                  debugger
                   assert.equals(
                       contents
                     , [
