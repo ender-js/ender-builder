@@ -1,11 +1,6 @@
-{{#isBare}}
-{{{mainSource}}}
-{{/isBare}}{{^isBare}}
   Module.loadPackage({{{id}}}, {
-{{#sources}}
-    {{{name}}}: function (module, exports, require) {
+{{#sources}}    {{{name}}}: function (module, exports, require) {
+
 {{{contents}}}
     }{{#comma}},{{/comma}}
-{{/sources}}
-  }, {{isExposed}}{{#main}}, {{{main}}}{{#bridge}}, {{{bridge}}}{{/bridge}}{{/main}});
-{{/isBare}}
+{{/sources}}  }, {{isExposed}}{{#main}}, {{{main}}}{{#bridge}}, {{{bridge}}}{{/bridge}}{{/main}});
