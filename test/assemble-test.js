@@ -53,38 +53,38 @@ var indent = function (str, spaces) {
     }
     
   , createExpectedPackage = function (pkg) {
-      var result = '' 
+      var result = "  Module.loadPackage(" + JSON.stringify(pkg.name) + ", {\n"
       
-      if (pkg.isBare) {
-        pkg.sources.forEach(function (source) {
-          if (source.name == pkg.main)
-            result = indent(source.contents, 2)
-        })
-
-      } else {
-        result += "  Module.loadPackage(" + JSON.stringify(pkg.name) + ", {\n"
-        result += pkg.sources.map(function (source, i) {
-          return (
-              "    " + JSON.stringify(source.name)
-            + ": function (module, exports, require) {\n\n"
-            + indent(source.contents, 6)
-            + "\n    }"
-          )
-        }).join(",\n")
-        result += "\n  }, " + pkg.isExposed
-        
-        if (pkg.main)   result += ", " + JSON.stringify(pkg.main)
-        if (pkg.bridge) result += ", " + JSON.stringify(pkg.bridge)
-        
-        result += ");\n"
-      }
+      result += pkg.sources.map(function (source, i) {
+        return (
+            "    " + JSON.stringify(source.name)
+          + ": function (module, exports, require) {\n\n"
+          + indent(source.contents, 6)
+          + "\n    }"
+        )
+      }).join(",\n")
+      
+      result += "\n  }, " + pkg.isExposed
+      result += ", " + JSON.stringify(pkg.main)
+      
+      if (pkg.bridge) result += ", " + JSON.stringify(pkg.bridge)
+      
+      result += ");\n"
       
       return result
     }
     
+  , createExpectedBareMain = function (pkg) {
+      var result = '' 
+      pkg.sources.forEach(function (source) {
+        if (source.name == pkg.main)
+          result = indent(source.contents, 2)
+      })
+      return result
+    }
+  
   , createExpectedBareBridge = function (pkg) {
       var result = '' 
-
       pkg.sources.forEach(function (source) {
         if (source.name == pkg.bridge)
           result = indent(source.contents, 2)
@@ -134,16 +134,15 @@ buster.testCase('Source build', {
           , function (p, cb) { p.loadSources(cb) }
           , function (err) {
               var barePackages = options.packages.filter(function (p) { return p.isBare })
+                , regularPackages = options.packages.filter(function (p) { return !p.isBare })
                 , expectedResult =
                     createExpectedHeader(options.contextString, options.packageList)
                     + "!function () {\n\n"
-                    + options.packages.map(createExpectedPackage).join("\n")
-                    + "\n"
-                    + (options.options.sandbox ? '' :
-                        (barePackages.length == 0 ? '' :
-                          (barePackages.map(createExpectedBareBridge).join("\n") + "\n")))
-                    + "  // Integrate all the modules\n"
-                    + "  Module._integrate()\n\n"
+                    + (barePackages.length == 0 ? '' :
+                        (barePackages.map(createExpectedBareMain).join("\n") + "\n"))
+                    + regularPackages.map(createExpectedPackage).join("\n") + "\n"
+                    + (options.options.sandbox || barePackages.length == 0 ? '' :
+                        (barePackages.map(createExpectedBareBridge).join("\n") + "\n"))
                     + "}.call({});\n"
 
               assemble.assemble(options.options, options.packages, function (err, actual) {

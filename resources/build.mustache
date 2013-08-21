@@ -7,11 +7,8 @@
   */
 
 !function () {
-
-{{#packages}}{{#isBare}}{{{mainSource}}}
-{{/isBare}}{{/packages}}{{#packages}}{{^isBare}}{{> package.mustache }}
-{{/isBare}}{{/packages}}{{^sandbox}}{{#packages}}{{#isBare}}{{{bridgeSource}}}
-{{/isBare}}{{/packages}}{{/sandbox}}  // Integrate all the modules
-  Module._integrate()
-
+{{#packages}}{{#isBare}}
+{{{mainSource}}}{{/isBare}}{{/packages}}{{#packages}}{{^isBare}}
+{{> package.mustache }}{{/isBare}}{{/packages}}{{^sandbox}}{{#packages}}{{#isBare}}
+{{{bridgeSource}}}{{/isBare}}{{/packages}}{{/sandbox}}
 }.call({});
