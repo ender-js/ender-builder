@@ -26,55 +26,36 @@
 var buster        = require('bustermove')
   , assert        = require('referee').assert
   , refute        = require('referee').refute
+  , path          = require('path')
+  
   , argsParser    = require('ender-args-parser')
+  , LocalPackage  = require('ender-package').LocalPackage
+
   , assemble      = require('../lib/assemble')
-  , SourcePackage = require('../lib/source-package')
   , SourceBuild   = require('../lib/source-build')
   , minify        = require('../lib/minify')
-  , path          = require('path')
 
-require('./common')
-
-var createExpectedHeader = function (context, packageList) {
-      return [
-          "/*!"
-        , "  * ============================================================="
-        , "  * Ender: open module JavaScript framework (https://ender.no.de)"
-        , "  * Build: ender " + context
-        , "  * Packages: " + packageList
-        , "  * ============================================================="
-        , "  */"
-      ].join('\n') + '\n\n'
-    }
 
 buster.testCase('Source build', {
     'setUp': function () {
-      this.createPackageMock = function (name, parents, descriptor, options) {
-        var pkg = SourcePackage.create(name, parents, descriptor, options)
-        this.mock(pkg).expects('loadSources').once().callsArgWith(0, null)
-        
-        // sinon can't mock getters
-        pkg.__defineGetter__('root', function () {
-          return path.resolve(path.join('.', 'node_modules', name))
-        })
-        
+      this.createPackageMock = function (name) {
+        var pkg = LocalPackage.create(path.resolve(path.join('node_modules', name)))
+        this.stub(pkg, 'loadSources').callsArgWith(0, null)
         return pkg
       }
     }
 
   , 'asString': {
         'plain': function (done) {
-          var pkg1 = this.createPackageMock('pkg1')
-            , pkg2 = this.createPackageMock('pkg2')
-            , pkg3 = this.createPackageMock('pkg3')
+          var packagesArg = [
+                  this.createPackageMock('pkg1')
+                , this.createPackageMock('pkg2')
+                , this.createPackageMock('pkg3')
+              ]
             , optionsArg = { options: 1 }
-            , srcBuild = SourceBuild.create(optionsArg)
+            , srcBuild = SourceBuild.create(optionsArg, packagesArg)
             , mockMinify = this.mock(minify)
             , mockAssemble = this.mock(assemble)
-          
-          srcBuild.addPackage(pkg1)
-          srcBuild.addPackage(pkg2)
-          srcBuild.addPackage(pkg3)
           
           mockAssemble.expects('assemble').once().withArgs(optionsArg, srcBuild.packages).callsArgWith(2, null, 'unminified')
           mockMinify.expects('minify').never()
@@ -87,17 +68,15 @@ buster.testCase('Source build', {
         }
 
       , 'minify': function (done) {
-          var pkg1 = this.createPackageMock('pkg1')
-            , pkg2 = this.createPackageMock('pkg2')
-            , pkg3 = this.createPackageMock('pkg3')
+          var packagesArg = [
+                  this.createPackageMock('pkg1')
+                , this.createPackageMock('pkg2')
+                , this.createPackageMock('pkg3')
+              ]
             , optionsArg = { options: 1 }
-            , srcBuild = SourceBuild.create(optionsArg)
+            , srcBuild = SourceBuild.create(optionsArg, packagesArg)
             , mockMinify = this.mock(minify)
             , mockAssemble = this.mock(assemble)
-
-          srcBuild.addPackage(pkg1)
-          srcBuild.addPackage(pkg2)
-          srcBuild.addPackage(pkg3)
 
           mockAssemble.expects('assemble').once().withArgs(optionsArg, srcBuild.packages).callsArgWith(2, null, 'unminified')
           mockMinify.expects('minify').once().withArgs(optionsArg, 'unminified').callsArgWith(2, null, 'minified')
@@ -113,25 +92,23 @@ buster.testCase('Source build', {
         // each of the packages, this allows for packages to add on options such as 'externs'
         // which are passed to the minifier
       , 'minify extends options for each package (externs)': function (done) {
-          var pkg1 = this.createPackageMock('pkg1')
-            , pkg2 = this.createPackageMock('pkg2')
-            , pkg3 = this.createPackageMock('pkg3')
+          var packagesArg = [
+                  this.createPackageMock('pkg1')
+                , this.createPackageMock('pkg2')
+                , this.createPackageMock('pkg3')
+              ]
             , optionsArg = { options: 1, externs: [ 'extern0' ] }
             , expectedOptionsArg
-            , srcBuild = SourceBuild.create(optionsArg)
+            , srcBuild = SourceBuild.create(optionsArg, packagesArg)
             , mockMinify = this.mock(minify)
             , mockAssemble = this.mock(assemble)
 
-          srcBuild.addPackage(pkg1)
-          srcBuild.addPackage(pkg2)
-          srcBuild.addPackage(pkg3)
-
           // sort of mock out the extendOptions() function
-          pkg2.extendOptions = function (options) {
+          packagesArg[1].extendOptions = function (options) {
             options.externs.push('extern1')
             options.externs.push('extern2')
           }
-          pkg3.extendOptions = function (options) {
+          packagesArg[2].extendOptions = function (options) {
             options.externs.push('extern3')
           }
           expectedOptionsArg = { options: 1, externs: [ 'extern0', 'extern1', 'extern2', 'extern3' ] }
@@ -144,23 +121,6 @@ buster.testCase('Source build', {
             assert.equals(actual, 'minified')
             done()
           })
-        }
-    }
-    
-  , 'addPackage': {
-        'bare package ordering': function (done) {
-          var pkg1 = this.createPackageMock('pkg1')
-            , pkg2 = this.createPackageMock('pkg2', null, { bare: true })
-            , pkg3 = this.createPackageMock('pkg3', null, { bare: true })
-            , optionsArg = { options: 1 }
-            , srcBuild = SourceBuild.create(optionsArg)
-        
-          srcBuild.addPackage(pkg1)
-          srcBuild.addPackage(pkg2)
-          srcBuild.addPackage(pkg3)
-        
-          assert.equals(srcBuild.packages, [ pkg2, pkg3, pkg1 ])
-          done()
         }
     }
 })

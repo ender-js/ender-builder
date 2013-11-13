@@ -22,19 +22,17 @@
  * SOFTWARE.
  */
 
-var buster        = require('bustermove')
+var async         = require('async')
+  , buster        = require('bustermove')
   , assert        = require('referee').assert
   , refute        = require('referee').refute
+
   , argsParser    = require('ender-args-parser')
-  , async         = require('async')
-  , events        = require('events')
-  , mu            = require('mu2')
+
   , assemble      = require('../lib/assemble')
-  , SourcePackage = require('../lib/source-package')
   , SourceBuild   = require('../lib/source-build')
   , minify        = require('../lib/minify')
 
-require('./common')
 
 var indent = function (str, spaces) {
       return str && str.replace(/^/mg, Array(spaces+1).join(' '))
@@ -55,16 +53,16 @@ var indent = function (str, spaces) {
   , createExpectedPackage = function (pkg) {
       var result = "  Module.loadPackage(" + JSON.stringify(pkg.name) + ", {\n"
       
-      result += pkg.sources.map(function (source, i) {
+      result += Object.keys(pkg.sources).sort().map(function (name, i) {
         return (
-            "    " + JSON.stringify(source.name)
+            "    " + JSON.stringify(name)
           + ": function (module, exports, require) {\n\n"
-          + indent(source.contents, 6)
+          + indent(pkg.sources[name], 6)
           + "\n    }"
         )
       }).join(",\n")
       
-      result += "\n  }, " + pkg.isExposed
+      result += "\n  }, " + pkg._exposed
       result += ", " + JSON.stringify(pkg.main)
       
       if (pkg.bridge) result += ", " + JSON.stringify(pkg.bridge)
@@ -76,18 +74,16 @@ var indent = function (str, spaces) {
     
   , createExpectedBareMain = function (pkg) {
       var result = '' 
-      pkg.sources.forEach(function (source) {
-        if (source.name == pkg.main)
-          result = indent(source.contents, 2)
+      Object.keys(pkg.sources).sort().forEach(function (name, i) {
+        if (name == pkg.main) result = indent(pkg.sources[name], 2)
       })
       return result
     }
   
   , createExpectedBareBridge = function (pkg) {
       var result = '' 
-      pkg.sources.forEach(function (source) {
-        if (source.name == pkg.bridge)
-          result = indent(source.contents, 2)
+      Object.keys(pkg.sources).sort().forEach(function (name, i) {
+        if (name == pkg.bridge) result = indent(pkg.sources[name], 2)
       })
       return result
     }
@@ -95,29 +91,31 @@ var indent = function (str, spaces) {
 buster.testCase('Source build', {
     'setUp': function () {
       
-      this.createPackageMock = function (name, parents, descriptor, options) {
-        var pkg = SourcePackage.create(name, parents, descriptor, options)
+      this.createPackageMock = function (descriptor) {
+        var pkg = Object.create(descriptor)
         
+        pkg.loaders = {}
+
         // Normally this is an async method, but not here
-        this.stub(pkg, 'loadSources', function (callback) {
-          var files = descriptor.files || []
+        pkg.loadSources = function (callback) {
+          var files = pkg.files || []
           if (pkg.main) files.push(pkg.main)
           if (pkg.bridge) files.push(pkg.bridge)
 
-          this.sources = files.map(function (file) {
-            return {
-              file: file,
-              contents: "// " + name + "/" + file + " contents\n",
-              name: file.replace(/\.js?$/, '')
-            }
+          pkg.sources = {}
+          files.forEach(function (file) {
+            pkg.sources[file.replace(/\.js?$/, '')] = "// " + pkg.name + "/" + file + " contents\n"
           })
           
           if (callback) callback()
-        })
+        }
         
-        // sinon can't mock getters
         pkg.__defineGetter__('root', function () {
           return path.resolve(path.join('.', 'node_modules', name))
+        })
+        
+        pkg.__defineGetter__('id', function () {
+          return pkg.name + '@' + pkg.version
         })
         
         return pkg
@@ -129,12 +127,20 @@ buster.testCase('Source build', {
             .expects('toContextString').withExactArgs(options.options).once()
             .returns(options.contextString)
 
+        // This is so we can simplify the createExpectedPackage function
+        options.packages.forEach(function (pkg) {
+          pkg._exposed = (!options.options ||
+                          !options.options.sandbox ||
+                          (Array.isArray(options.options.sandbox) &&
+                           options.options.sandbox.indexOf(pkg.name) == -1))
+        })
+
         async.map(
             options.packages
-          , function (p, cb) { p.loadSources(cb) }
+          , function (pkg, cb) { pkg.loadSources(cb) }
           , function (err) {
-              var barePackages = options.packages.filter(function (p) { return p.isBare })
-                , regularPackages = options.packages.filter(function (p) { return !p.isBare })
+              var barePackages = options.packages.filter(function (pkg) { return pkg.bare })
+                , regularPackages = options.packages.filter(function (pkg) { return !pkg.bare })
                 , expectedResult =
                     createExpectedHeader(options.contextString, options.packageList)
                     + "!function () {\n\n"
@@ -160,22 +166,13 @@ buster.testCase('Source build', {
           var options = { option: 1 }
             , packages = [
                   this.createPackageMock(
-                      'pkg1'
-                    , []
-                    , { name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                   )
                 , this.createPackageMock(
-                      'pkg2'
-                    , []
-                    , { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                   )
                 , this.createPackageMock(
-                      'pkg3'
-                    , []
-                    , { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                   )
               ]
           
@@ -191,22 +188,13 @@ buster.testCase('Source build', {
           var options = { sandbox: true }
             , packages = [
                   this.createPackageMock(
-                      'pkg1'
-                    , []
-                    , { name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                   )
                 , this.createPackageMock(
-                      'pkg2'
-                    , []
-                    , { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                   )
                 , this.createPackageMock(
-                      'pkg3'
-                    , []
-                    , { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                   )
               ]
             
@@ -222,22 +210,13 @@ buster.testCase('Source build', {
           var options = { sandbox: ['pkg2'] }
             , packages = [
                   this.createPackageMock(
-                      'pkg1'
-                    , []
-                    , { name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                   )
                 , this.createPackageMock(
-                      'pkg2'
-                    , []
-                    , { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                   )
                 , this.createPackageMock(
-                      'pkg3'
-                    , []
-                    , { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
-                    , options
+                    { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                   )
               ]
           
@@ -253,28 +232,16 @@ buster.testCase('Source build', {
         var options = { options: 1 }
           , packages = [
                 this.createPackageMock(
-                    'pkg1'
-                  , []
-                  , { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                 )
               , this.createPackageMock(
-                    'pkg2'
-                  , []
-                  , { bare: true, name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { bare: true, name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                 )
               , this.createPackageMock(
-                    'pkg3'
-                  , []
-                  , { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                 )
               , this.createPackageMock(
-                    'pkg4'
-                  , []
-                  , { name: 'pkg4', version: '2.3.1', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { name: 'pkg4', version: '2.3.1', main: 'lib/main', bridge: 'lib/bridge' }
                 )
             ]
           
@@ -290,22 +257,13 @@ buster.testCase('Source build', {
         var options = { sandbox: true }
           , packages = [
                 this.createPackageMock(
-                    'pkg1'
-                  , []
-                  , { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                 )
               , this.createPackageMock(
-                    'pkg2'
-                  , []
-                  , { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                 )
               , this.createPackageMock(
-                    'pkg3'
-                  , []
-                  , { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                 )
             ]
           
@@ -321,22 +279,13 @@ buster.testCase('Source build', {
         var options = { sandbox: ['pkg2'] }
           , packages = [
                 this.createPackageMock(
-                    'pkg1'
-                  , []
-                  , { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                 )
               , this.createPackageMock(
-                    'pkg2'
-                  , []
-                  , { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
                 )
               , this.createPackageMock(
-                    'pkg3'
-                  , []
-                  , { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
-                  , options
+                  { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                 )
             ]
         

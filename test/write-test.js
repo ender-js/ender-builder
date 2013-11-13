@@ -31,6 +31,7 @@ var buster          = require('bustermove')
   , write           = require('../lib/write')
   , FilesystemError = require('errno').custom.FilesystemError
 
+
 buster.testCase('Write', {
     'test standard write': function (done) {
       var sourceBuild = SourceBuild.create()
