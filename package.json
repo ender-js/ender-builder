@@ -1,7 +1,7 @@
 {
     "name"            : "ender-builder"
   , "description"     : "Build assembler for the Ender CLI"
-  , "version"         : "0.3.0-dev"
+  , "version"         : "0.4.0-dev"
   , "authors"         : [
         "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
       , "Dustin Diaz @ded <dustin@dustindiaz.com> (https://github.com/ded)"
