@@ -27,7 +27,7 @@ var buster        = require('bustermove')
   , assert        = require('referee').assert
   , refute        = require('referee').refute
   , path          = require('path')
-  
+
   , argsParser    = require('ender-args-parser')
   , LocalPackage  = require('ender-package').LocalPackage
 
@@ -56,7 +56,7 @@ buster.testCase('Source build', {
             , srcBuild = SourceBuild.create(optionsArg, packagesArg)
             , mockMinify = this.mock(minify)
             , mockAssemble = this.mock(assemble)
-          
+
           mockAssemble.expects('assemble').once().withArgs(optionsArg, srcBuild.packages).callsArgWith(2, null, 'unminified')
           mockMinify.expects('minify').never()
 

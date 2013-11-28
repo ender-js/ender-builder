@@ -30,14 +30,13 @@ var async         = require('async')
   , argsParser    = require('ender-args-parser')
 
   , assemble      = require('../lib/assemble')
-  , SourceBuild   = require('../lib/source-build')
   , minify        = require('../lib/minify')
 
 
 var indent = function (str, spaces) {
       return str && str.replace(/^/mg, Array(spaces+1).join(' '))
     }
-    
+
   , createExpectedHeader = function (context, packageList) {
       return [
           "/*!"
@@ -49,10 +48,10 @@ var indent = function (str, spaces) {
         , "  */"
       ].join('\n') + '\n\n'
     }
-    
+
   , createExpectedPackage = function (pkg) {
       var result = "  Module.loadPackage(" + JSON.stringify(pkg.name) + ", {\n"
-      
+
       result += Object.keys(pkg.sources).sort().map(function (name, i) {
         return (
             "    " + JSON.stringify(name)
@@ -61,27 +60,27 @@ var indent = function (str, spaces) {
           + "\n    }"
         )
       }).join(",\n")
-      
+
       result += "\n  }, " + pkg._exposed
       result += ", " + JSON.stringify(pkg.main)
-      
+
       if (pkg.bridge) result += ", " + JSON.stringify(pkg.bridge)
-      
+
       result += ");\n"
-      
+
       return result
     }
-    
+
   , createExpectedBareMain = function (pkg) {
-      var result = '' 
+      var result = ''
       Object.keys(pkg.sources).sort().forEach(function (name, i) {
         if (name == pkg.main) result = indent(pkg.sources[name], 2)
       })
       return result
     }
-  
+
   , createExpectedBareBridge = function (pkg) {
-      var result = '' 
+      var result = ''
       Object.keys(pkg.sources).sort().forEach(function (name, i) {
         if (name == pkg.bridge) result = indent(pkg.sources[name], 2)
       })
@@ -90,10 +89,10 @@ var indent = function (str, spaces) {
 
 buster.testCase('Source build', {
     'setUp': function () {
-      
+
       this.createPackageMock = function (descriptor) {
         var pkg = Object.create(descriptor)
-        
+
         pkg.loaders = {}
 
         // Normally this is an async method, but not here
@@ -106,23 +105,23 @@ buster.testCase('Source build', {
           files.forEach(function (file) {
             pkg.sources[file.replace(/\.js?$/, '')] = "// " + pkg.name + "/" + file + " contents\n"
           })
-          
+
           if (callback) callback()
         }
-        
+
         pkg.__defineGetter__('root', function () {
           return path.resolve(path.join('.', 'node_modules', name))
         })
-        
+
         pkg.__defineGetter__('id', function () {
           return pkg.name + '@' + pkg.version
         })
-        
+
         return pkg
       }
 
       this.runAssembleTest = function (options, done) {
-      
+
         this.mock(argsParser)
             .expects('toContextString').withExactArgs(options.options).once()
             .returns(options.contextString)
@@ -175,7 +174,7 @@ buster.testCase('Source build', {
                     { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                   )
               ]
-          
+
           this.runAssembleTest({
               options: options
             , packages: packages
@@ -197,7 +196,7 @@ buster.testCase('Source build', {
                     { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                   )
               ]
-            
+
           this.runAssembleTest({
               options: options
             , packages: packages
@@ -219,7 +218,7 @@ buster.testCase('Source build', {
                     { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                   )
               ]
-          
+
           this.runAssembleTest({
               options: options
             , packages: packages
@@ -244,7 +243,7 @@ buster.testCase('Source build', {
                   { name: 'pkg4', version: '2.3.1', main: 'lib/main', bridge: 'lib/bridge' }
                 )
             ]
-          
+
         this.runAssembleTest({
             options: options
           , packages: packages
@@ -266,7 +265,7 @@ buster.testCase('Source build', {
                   { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                 )
             ]
-          
+
         this.runAssembleTest({
             options: options
           , packages: packages
@@ -288,7 +287,7 @@ buster.testCase('Source build', {
                   { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
                 )
             ]
-        
+
         this.runAssembleTest({
             options: options
           , packages: packages
