@@ -22,72 +22,21 @@
  * SOFTWARE.
  */
 
-var async         = require('async')
+var assert        = require('referee').assert
+  , async         = require('async')
   , buster        = require('bustermove')
-  , assert        = require('referee').assert
+  , events        = require('events')
+  , path          = require('path')
   , refute        = require('referee').refute
 
   , argsParser    = require('ender-args-parser')
+  , mu            = require('mu2')
 
   , assemble      = require('../lib/assemble')
   , minify        = require('../lib/minify')
 
 
-var indent = function (str, spaces) {
-      return str && str.replace(/^/mg, Array(spaces+1).join(' '))
-    }
-
-  , createExpectedHeader = function (context, packageList) {
-      return [
-          "/*!"
-        , "  * ============================================================="
-        , "  * Ender: open module JavaScript framework (https://ender.no.de)"
-        , "  * Build: ender " + context
-        , "  * Packages: " + packageList
-        , "  * ============================================================="
-        , "  */"
-      ].join('\n') + '\n\n'
-    }
-
-  , createExpectedPackage = function (pkg) {
-      var result = "  Module.loadPackage(" + JSON.stringify(pkg.name) + ", {\n"
-
-      result += Object.keys(pkg.sources).sort().map(function (name, i) {
-        return (
-            "    " + JSON.stringify(name)
-          + ": function (module, exports, require) {\n\n"
-          + indent(pkg.sources[name], 6)
-          + "\n    }"
-        )
-      }).join(",\n")
-
-      result += "\n  }, " + pkg._exposed
-      result += ", " + JSON.stringify(pkg.main)
-
-      if (pkg.bridge) result += ", " + JSON.stringify(pkg.bridge)
-
-      result += ");\n"
-
-      return result
-    }
-
-  , createExpectedBareMain = function (pkg) {
-      var result = ''
-      Object.keys(pkg.sources).sort().forEach(function (name, i) {
-        if (name == pkg.main) result = indent(pkg.sources[name], 2)
-      })
-      return result
-    }
-
-  , createExpectedBareBridge = function (pkg) {
-      var result = ''
-      Object.keys(pkg.sources).sort().forEach(function (name, i) {
-        if (name == pkg.bridge) result = indent(pkg.sources[name], 2)
-      })
-      return result
-    }
-
-buster.testCase('Source build', {
+  buster.testCase('Assemble', {
     'setUp': function () {
 
       this.createPackageMock = function (descriptor) {
@@ -98,63 +47,55 @@ buster.testCase('Source build', {
         // Normally this is an async method, but not here
         pkg.loadSources = function (callback) {
           var files = pkg.files || []
-          if (pkg.main) files.push(pkg.main)
-          if (pkg.bridge) files.push(pkg.bridge)
+          if (pkg.bridge) files.unshift(pkg.bridge)
+          if (pkg.main) files.unshift(pkg.main)
 
-          pkg.sources = {}
+          pkg.sources = []
           files.forEach(function (file) {
-            pkg.sources[file.replace(/\.js?$/, '')] = "// " + pkg.name + "/" + file + " contents\n"
+            pkg.sources.push({
+                name: file.replace(/\.js?$/, '')
+              , content: "// " + pkg.name + "/" + file + " contents\n"
+            })
           })
 
           if (callback) callback()
         }
 
-        pkg.__defineGetter__('root', function () {
-          return path.resolve(path.join('.', 'node_modules', name))
-        })
-
-        pkg.__defineGetter__('id', function () {
-          return pkg.name + '@' + pkg.version
-        })
+        pkg.bare = !!pkg.bare
+        pkg.root = path.resolve(path.join('.', 'node_modules', pkg.name))
+        pkg.__defineGetter__('id', function () { return pkg.name + '@' + pkg.version })
 
         return pkg
       }
 
-      this.runAssembleTest = function (options, done) {
+      this.runAssembleTest = function (options, packages, expectedTemplateData, done) {
+        var check = function (ob, checks) {
+              for (key in checks) {
+                if (typeof(checks[key]) == 'object') check(ob[key], checks[key])
+                else assert.equals(ob[key], checks[key])
+              }
+            }
 
         this.mock(argsParser)
-            .expects('toContextString').withExactArgs(options.options).once()
-            .returns(options.contextString)
+            .expects('toContextString')
+            .withExactArgs(options)
+            .once()
+            .returns('context string')
 
-        // This is so we can simplify the createExpectedPackage function
-        options.packages.forEach(function (pkg) {
-          pkg._exposed = (!options.options ||
-                          !options.options.sandbox ||
-                          (Array.isArray(options.options.sandbox) &&
-                           options.options.sandbox.indexOf(pkg.name) == -1))
+        this.stub(mu, 'compileAndRender', function (template, templateData) {
+          assert(template == 'build.mustache' || template == 'build.map.mustache')
+          check(templateData, expectedTemplateData)
+
+          var emitter = new events.EventEmitter
+          process.nextTick(function () { emitter.emit('end') })
+          return emitter
         })
 
         async.map(
-            options.packages
+            packages
           , function (pkg, cb) { pkg.loadSources(cb) }
           , function (err) {
-              var barePackages = options.packages.filter(function (pkg) { return pkg.bare })
-                , regularPackages = options.packages.filter(function (pkg) { return !pkg.bare })
-                , expectedResult =
-                    createExpectedHeader(options.contextString, options.packageList)
-                    + "!function () {\n\n"
-                    + (barePackages.length == 0 ? '' :
-                        (barePackages.map(createExpectedBareMain).join("\n") + "\n"))
-                    + regularPackages.map(createExpectedPackage).join("\n") + "\n"
-                    + (options.options.sandbox || barePackages.length == 0 ? '' :
-                        (barePackages.map(createExpectedBareBridge).join("\n") + "\n"))
-                    + "}.call({});\n"
-
-              assemble.assemble(options.options, options.packages, function (err, actual) {
-                refute(err)
-                assert.equals(actual, expectedResult)
-                done()
-              })
+              assemble.assemble('ender.js', 'ender.js.map', options, packages, done)
             }
         )
       }
@@ -175,16 +116,24 @@ buster.testCase('Source build', {
                   )
               ]
 
-          this.runAssembleTest({
-              options: options
-            , packages: packages
-            , contextString: "some context here & don\'t escape <this>"
-            , packageList: "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3"
-          }, done)
+          this.runAssembleTest(
+              options
+            , packages
+            , {
+                  packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+                , context: 'context string'
+                , packages: [
+                      { isBare: false, isExposed: false, sources: { length: 2 } }
+                    , { isBare: false, isExposed: false, sources: { length: 2 } }
+                    , { isBare: false, isExposed: false, sources: { length: 2 } }
+                  ]
+              }
+            , done
+          )
         }
 
       , 'basic sandbox': function (done) {
-          var options = { sandbox: true }
+          var options = { sandbox: [] }
             , packages = [
                   this.createPackageMock(
                     { name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
@@ -197,12 +146,20 @@ buster.testCase('Source build', {
                   )
               ]
 
-          this.runAssembleTest({
-              options: options
-            , packages: packages
-            , contextString: "some context here & don\'t escape <this>"
-            , packageList: "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3"
-          }, done)
+          this.runAssembleTest(
+              options
+            , packages
+            , {
+                  packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+                , context: 'context string'
+                , packages: [
+                      { isBare: false, isExposed: false, sources: { length: 2 } }
+                    , { isBare: false, isExposed: false, sources: { length: 2 } }
+                    , { isBare: false, isExposed: false, sources: { length: 2 } }
+                  ]
+              }
+            , done
+          )
         }
 
       , 'basic sandbox w/ exposed packages': function (done) {
@@ -219,12 +176,20 @@ buster.testCase('Source build', {
                   )
               ]
 
-          this.runAssembleTest({
-              options: options
-            , packages: packages
-            , contextString: "some context here & don\'t escape <this>"
-            , packageList: "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3"
-          }, done)
+          this.runAssembleTest(
+              options
+            , packages
+            , {
+                  packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+                , context: 'context string'
+                , packages: [
+                      { isBare: false, isExposed: false, sources: { length: 2 } }
+                    , { isBare: false, isExposed: true, sources: { length: 2 } }
+                    , { isBare: false, isExposed: false, sources: { length: 2 } }
+                  ]
+              }
+            , done
+          )
         }
 
     , 'bare packages': function (done) {
@@ -244,16 +209,25 @@ buster.testCase('Source build', {
                 )
             ]
 
-        this.runAssembleTest({
-            options: options
-          , packages: packages
-          , contextString: "some context here & don\'t escape <this>"
-          , packageList: "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3 pkg4@2.3.1"
-        }, done)
+        this.runAssembleTest(
+            options
+          , packages
+          , {
+                packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3 pkg4@2.3.1'
+              , context: 'context string'
+              , packages: [
+                    { isBare: true, isExposed: true, sources: { length: 2 } }
+                  , { isBare: true, isExposed: true, sources: { length: 2 } }
+                  , { isBare: false, isExposed: false, sources: { length: 2 } }
+                  , { isBare: false, isExposed: false, sources: { length: 2 } }
+                ]
+            }
+          , done
+        )
       }
 
     , 'bare packages sandbox': function (done) {
-        var options = { sandbox: true }
+        var options = { sandbox: [] }
           , packages = [
                 this.createPackageMock(
                   { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
@@ -266,16 +240,24 @@ buster.testCase('Source build', {
                 )
             ]
 
-        this.runAssembleTest({
-            options: options
-          , packages: packages
-          , contextString: "some context here & don\'t escape <this>"
-          , packageList: "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3"
-        }, done)
+        this.runAssembleTest(
+            options
+          , packages
+          , {
+                packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+              , context: 'context string'
+              , packages: [
+                    { isBare: true, isExposed: false, sources: { length: 1 } }
+                  , { isBare: false, isExposed: false, sources: { length: 2 } }
+                  , { isBare: false, isExposed: false, sources: { length: 2 } }
+                ]
+            }
+          , done
+        )
       }
 
     , 'bare packages sandbox w/ exposed packages': function (done) {
-        var options = { sandbox: ['pkg2'] }
+        var options = { sandbox: ['pkg1', 'pkg2'] }
           , packages = [
                 this.createPackageMock(
                   { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
@@ -288,12 +270,111 @@ buster.testCase('Source build', {
                 )
             ]
 
-        this.runAssembleTest({
-            options: options
-          , packages: packages
-          , contextString: "some context here & don\'t escape <this>"
-          , packageList: "pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3"
-        }, done)
+        this.runAssembleTest(
+            options
+          , packages
+          , {
+                packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+              , context: 'context string'
+              , packages: [
+                    { isBare: true, isExposed: true, sources: { length: 2 } }
+                  , { isBare: false, isExposed: true, sources: { length: 2 } }
+                  , { isBare: false, isExposed: false, sources: { length: 2 } }
+                ]
+            }
+          , done
+        )
+      }
+
+    , '--module-lib none': function (done) {
+        var options = { 'module-lib': 'none' }
+          , packages = [
+                this.createPackageMock(
+                  { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+              , this.createPackageMock(
+                  { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+              , this.createPackageMock(
+                  { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+            ]
+
+        this.runAssembleTest(
+            options
+          , packages
+          , {
+                packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+              , context: 'context string'
+              , packages: [
+                    { isBare: true, isExposed: true, sources: { length: 2 } }
+                  , { isBare: true, isExposed: false, sources: { length: 2 } }
+                  , { isBare: true, isExposed: false, sources: { length: 2 } }
+                ]
+            }
+          , done
+        )
+      }
+
+
+    , '--module-lib none, with basic sandbox': function (done) {
+        var options = { 'module-lib': 'none', sandbox: [] }
+          , packages = [
+                this.createPackageMock(
+                  { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+              , this.createPackageMock(
+                  { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+              , this.createPackageMock(
+                  { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+            ]
+
+        this.runAssembleTest(
+            options
+          , packages
+          , {
+                packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+              , context: 'context string'
+              , packages: [
+                    { isBare: true, isExposed: false, sources: { length: 1 } }
+                  , { isBare: true, isExposed: false, sources: { length: 2 } }
+                  , { isBare: true, isExposed: false, sources: { length: 2 } }
+                ]
+            }
+          , done
+        )
+      }
+
+    , '--module-lib none, sandbox w/ exposed packages': function (done) {
+        var options = { 'module-lib': 'none', sandbox: ['pkg1', 'pkg2'] }
+          , packages = [
+                this.createPackageMock(
+                  { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+              , this.createPackageMock(
+                  { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+              , this.createPackageMock(
+                  { name: 'pkg3', version: '1.2.3', main: 'lib/main', bridge: 'lib/bridge' }
+                )
+            ]
+
+        this.runAssembleTest(
+            options
+          , packages
+          , {
+                packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+              , context: 'context string'
+              , packages: [
+                    { isBare: true, isExposed: true, sources: { length: 2 } }
+                  , { isBare: true, isExposed: true, sources: { length: 2 } }
+                  , { isBare: true, isExposed: false, sources: { length: 2 } }
+                ]
+            }
+          , done
+        )
       }
     }
 })

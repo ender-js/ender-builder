@@ -2,13 +2,11 @@
   * =============================================================
   * Ender: open module JavaScript framework (https://enderjs.com)
   * Build: ender {{{context}}}
-  * Packages: {{packageList}}
+  * Packages: {{{packageList}}}
   * =============================================================
   */
 
 (function () {
-{{#packages}}{{#isBare}}
-{{{mainSource}}}{{/isBare}}{{/packages}}{{#packages}}{{^isBare}}
-{{> package.mustache }}{{/isBare}}{{/packages}}{{^sandbox}}{{#packages}}{{#isBare}}
-{{{bridgeSource}}}{{/isBare}}{{/packages}}{{/sandbox}}
-}.call(window));
+{{#packages}}{{>package.mustache}}{{/packages}}
+}.call({}));
+//# sourceMappingURL={{{sourceMapName}}}
