@@ -71,7 +71,7 @@ var assert        = require('referee').assert
       this.runAssembleTest = function (options, packages, expectedTemplateData, done) {
         var check = function (ob, checks) {
               for (key in checks) {
-                if (typeof(checks[key]) == 'object') check(ob[key], checks[key])
+                if (typeof checks[key] == 'object') check(ob[key], checks[key])
                 else assert.equals(ob[key], checks[key])
               }
             }
@@ -285,5 +285,109 @@ var assert        = require('referee').assert
           , done
         )
       }
+    }
+
+  , 'source maps': {
+        'basic': function (done) {
+          var options = { option: 1 }
+            , packages = [
+                  this.createPackageMock(
+                    { name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                  )
+              ]
+
+          this.runAssembleTest(
+              options
+            , packages
+            , {
+                  packageList: 'pkg1@0.1.1'
+                , context: 'context string'
+                , packages: [
+                      {
+                          isBare: false
+                        , isExposed: false
+                        , sources: {
+                              length: 2
+                            , 0: { mappings: 'AAAA,M,0BAA0B;' }
+                            , 1: { mappings: 'ACA1B,M,4BAA4B;' }
+                          }
+                      }
+                  ]
+              }
+            , done
+          )
+        }
+
+      , 'multiline package': function (done) {
+          var options = { option: 1 }
+            , packages = [
+                  this.createPackageMock(
+                    { name: 'pkg1', version: '0.1.1', main: '\n// main', bridge: '\n// bridge' }
+                  )
+              ]
+
+          this.runAssembleTest(
+              options
+            , packages
+            , {
+                  packageList: 'pkg1@0.1.1'
+                , context: 'context string'
+                , packages: [
+                      {
+                          isBare: false
+                        , isExposed: false
+                        , sources: {
+                              length: 2
+                            , 0: { mappings: 'AAAA,M,SAAS;AACT,M,iBAAiB;' }
+                            , 1: { mappings: 'ACDjB,M,SAAS;AACT,M,mBAAmB;' }
+                          }
+                      }
+                  ]
+              }
+            , done
+          )
+        }
+
+      , 'bare package': function (done) {
+          var options = { option: 1 }
+            , packages = [
+                  this.createPackageMock(
+                    { bare: true, name: 'pkg1', version: '0.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                  )
+                , this.createPackageMock(
+                    { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                  )
+              ]
+
+          this.runAssembleTest(
+              options
+            , packages
+            , {
+                  packageList: 'pkg1@0.1.1 pkg2@1.1.1'
+                , context: 'context string'
+                , packages: [
+                      {
+                          isBare: true
+                        , isExposed: true
+                        , sources: {
+                              length: 2
+                            , 0: { mappings: 'AAAA,E,0BAA0B;' }
+                            , 1: { mappings: 'ACA1B,E,4BAA4B;' }
+                          }
+                      }
+                    , {
+                          isBare: false
+                        , isExposed: false
+                        , sources: {
+                              length: 2
+                            , 0: { mappings: 'ACA5B,M,0BAA0B;' }
+                            , 1: { mappings: 'ACA1B,M,4BAA4B;' }
+                          }
+                      }
+                  ]
+              }
+            , done
+          )
+        }
     }
 })
