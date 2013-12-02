@@ -1,10 +1,10 @@
 {{#isBare}}{{#sources}}
 {{{content}}}{{/sources}}{{/isBare}}{{^isBare}}
-  Module.loadPackage({{{name}}}, {
+  Module.createPackage('{{{name}}}', {
 {{#sources}}{{#i}},
-{{/i}}    {{{name}}}: function (module, exports, require, global) {
+{{/i}}    '{{{name}}}': function (module, exports, require, global) {
 
 {{{content}}}
     }{{/sources}}
-  }, {{isExposed}}, {{{main}}}{{#bridge}}, {{{bridge}}}{{/bridge}});
+  }{{#main}}, '{{{main}}}'{{/main}});
 {{/isBare}}

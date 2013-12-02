@@ -7,6 +7,9 @@
   */
 
 (function () {
-{{#packages}}{{>package.mustache}}{{/packages}}
+{{#packages}}{{>package.mustache}}{{/packages}}{{#packages}}{{^isBare}}{{#main}}
+  {{#isExposed}}window['{{{name}}}'] = {{/isExposed}}require('{{{name}}}');{{/main}}{{#bridge}}
+  require('{{{name}}}/{{{bridge}}}');{{/bridge}}{{/isBare}}{{/packages}}
+
 }.call({}));
 //# sourceMappingURL={{{sourceMapName}}}
