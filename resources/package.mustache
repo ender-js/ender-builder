@@ -1,6 +1,10 @@
-  Module.loadPackage({{{name}}}, {
-{{#sources}}    {{{name}}}: function (module, exports, require, global) {
+{{#isBare}}{{#sources}}
+{{{content}}}{{/sources}}{{/isBare}}{{^isBare}}
+  Module.createPackage('{{{name}}}', {
+{{#sources}}{{#i}},
+{{/i}}    '{{{name}}}': function (module, exports, require, global) {
 
-{{{contents}}}
-    }{{#comma}},{{/comma}}
-{{/sources}}  }, {{isExposed}}, {{{main}}}{{#bridge}}, {{{bridge}}}{{/bridge}});
+{{{content}}}
+    }{{/sources}}
+  }{{#main}}, '{{{main}}}'{{/main}});
+{{/isBare}}
