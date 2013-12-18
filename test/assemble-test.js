@@ -33,7 +33,6 @@ var assert        = require('referee').assert
   , mu            = require('mu2')
 
   , assemble      = require('../lib/assemble')
-  , minify        = require('../lib/minify')
 
 
   buster.testCase('Assemble', {
