@@ -34,7 +34,7 @@ var buster        = require('bustermove')
 
   , builder       = require('../lib/index')
   , assemble      = require('../lib/assemble')
-  , minify        = require('../lib/minify')
+  , minifiers     = require('../lib/minifiers')
 
 
 buster.testCase('Source build', {
@@ -57,26 +57,31 @@ buster.testCase('Source build', {
                 , this.createPackageMock('pkg2', false)
                 , this.createPackageMock('pkg3', false)
               ]
-            , buildResults = { build: 'unminified', sourceMap: 'source map' }
+
+            , filesArg = {
+                  build: 'unminified'
+                , sourceMap: 'source map'
+              }
+
             , optionsArg = { options: 1, minifier: 'none' }
             , assembleMock = this.mock(assemble)
-            , minifyMock = this.mock(minify)
+            , minifiersMock = this.mock(minifiers)
             , fsMock = this.mock(fs)
 
           assembleMock
             .expects('assemble')
             .once()
             .withArgs('ender.js', 'ender.js.map', optionsArg, packagesArg)
-            .callsArgWith(4, null, buildResults)
+            .callsArgWith(4, null, filesArg)
 
-          minifyMock.expects('minify').never()
+          minifiersMock.expects('uglify').never()
           fsMock.expects('writeFile').twice().callsArg(3)
 
           builder(optionsArg, packagesArg, function (err) {
             refute(err)
-            assert.equals(buildResults.build, 'unminified')
-            assert.equals(buildResults.sourceMap, 'source map')
-            assert.equals(buildResults.minifiedBuild, undefined)
+            assert.equals(filesArg.build, 'unminified')
+            assert.equals(filesArg.sourceMap, 'source map')
+            assert.equals(filesArg.minifiedBuild, undefined)
             done()
           })
         }
@@ -87,27 +92,46 @@ buster.testCase('Source build', {
                 , this.createPackageMock('pkg2', true)
                 , this.createPackageMock('pkg3', true)
               ]
-            , buildResults = { build: 'unminified', sourceMap: 'source map' }
-            , buildResults = { build: 'unminified', sourceMap: 'source map' }
+
+            , filesArg = {
+                  build: 'unminified'
+                , sourceMap: 'source map'
+                , minifiedBuild: 'minified'
+                , minifiedSourceMap: 'minified source map'
+              }
+
+            , filenamesArg = {
+                  build: 'ender.js'
+                , sourceMap: 'ender.js.map'
+                , minifiedBuild: 'ender.min.js'
+                , minifiedSourceMap: 'ender.min.js.map'
+              }
+
             , optionsArg = { options: 1, minifier: 'uglify' }
             , assembleMock = this.mock(assemble)
-            , minifyMock = this.mock(minify)
+            , minifiersMock = this.mock(minifiers)
             , fsMock = this.mock(fs)
 
-            assembleMock
-              .expects('assemble')
-              .once()
-              .withArgs('ender.js', 'ender.js.map', optionsArg, packagesArg)
-              .callsArgWith(4, null, buildResults)
+          assembleMock
+            .expects('assemble')
+            .once()
+            .withArgs('ender.js', 'ender.js.map', optionsArg, packagesArg)
+            .callsArgWith(4, null, filesArg)
 
-          minifyMock.expects('minify').once().withArgs(optionsArg, 'unminified').callsArgWith(2, null, 'minified')
-          fsMock.expects('writeFile').thrice().callsArg(3)
+          minifiersMock
+            .expects('uglify')
+            .once()
+            .withArgs(filesArg, filenamesArg, optionsArg)
+            .callsArgWith(3, null, filesArg)
+
+          fsMock.expects('writeFile').exactly(4).callsArg(3)
 
           builder(optionsArg, packagesArg, function (err) {
             refute(err)
-            assert.equals(buildResults.build, 'unminified')
-            assert.equals(buildResults.sourceMap, 'source map')
-            assert.equals(buildResults.minifiedBuild, 'minified')
+            assert.equals(filesArg.build, 'unminified')
+            assert.equals(filesArg.sourceMap, 'source map')
+            assert.equals(filesArg.minifiedBuild, 'minified')
+            assert.equals(filesArg.minifiedSourceMap, 'minified source map')
             done()
           })
         }
@@ -121,11 +145,25 @@ buster.testCase('Source build', {
                 , this.createPackageMock('pkg2', true)
                 , this.createPackageMock('pkg3', true)
               ]
-            , buildResults = { build: 'unminified', sourceMap: 'source map' }
+
+            , filesArg = {
+                  build: 'unminified'
+                , sourceMap: 'source map'
+                , minifiedBuild: 'minified'
+                , minifiedSourceMap: 'minified source map'
+              }
+
+            , filenamesArg = {
+                  build: 'ender.js'
+                , sourceMap: 'ender.js.map'
+                , minifiedBuild: 'ender.min.js'
+                , minifiedSourceMap: 'ender.min.js.map'
+              }
+
             , optionsArg = { options: 1, minifier: 'closure', externs: [ 'extern0' ] }
             , expectedOptionsArg = { options: 1, minifier: 'closure', externs: [ 'extern0', 'extern1', 'extern2', 'extern3' ] }
             , assembleMock = this.mock(assemble)
-            , minifyMock = this.mock(minify)
+            , minifiersMock = this.mock(minifiers)
             , fsMock = this.mock(fs)
 
           // sort of mock out the extendOptions() function
@@ -133,6 +171,7 @@ buster.testCase('Source build', {
             options.externs.push('extern1')
             options.externs.push('extern2')
           }
+
           packagesArg[2].extendOptions = function (options) {
             options.externs.push('extern3')
           }
@@ -141,16 +180,22 @@ buster.testCase('Source build', {
             .expects('assemble')
             .once()
             .withArgs('ender.js', 'ender.js.map', optionsArg, packagesArg)
-            .callsArgWith(4, null, buildResults)
+            .callsArgWith(4, null, filesArg)
 
-          minifyMock.expects('minify').once().withArgs(expectedOptionsArg, 'unminified').callsArgWith(2, null, 'minified')
-          fsMock.expects('writeFile').thrice().callsArg(3)
+          minifiersMock
+            .expects('closure')
+            .once()
+            .withArgs(filesArg, filenamesArg, expectedOptionsArg)
+            .callsArgWith(3, null, filesArg)
+
+          fsMock.expects('writeFile').exactly(4).callsArg(3)
 
           builder(optionsArg, packagesArg, function (err) {
             refute(err)
-            assert.equals(buildResults.build, 'unminified')
-            assert.equals(buildResults.sourceMap, 'source map')
-            assert.equals(buildResults.minifiedBuild, 'minified')
+            assert.equals(filesArg.build, 'unminified')
+            assert.equals(filesArg.sourceMap, 'source map')
+            assert.equals(filesArg.minifiedBuild, 'minified')
+            assert.equals(filesArg.minifiedSourceMap, 'minified source map')
             done()
           })
         }

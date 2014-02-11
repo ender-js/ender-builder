@@ -26,7 +26,7 @@
 var buster = require('bustermove')
   , assert = require('referee').assert
   , refute = require('referee').refute
-  , uglify = require('../lib/uglify')
+  , uglify = require('../lib/minifiers/uglify')
 
 buster.testCase('Uglify', {
     'test basic minification': function (done) {
@@ -61,8 +61,9 @@ buster.testCase('Uglify', {
             + ' * this is another copyright block\n'
             + ' */\n\n'
             + '!function foobar2 () { var biglongvar = \'str\'; return biglongvar + \'str\'; }();'
+
          , expected =
-              /^\/\*!\n \* this is a copyright block\n \*\/\n;?!function\(\)\{var ([a-z])="str";return \1\+"str"\}\(\),\n\/\*!\n \* this is another copyright block\n \*\/\n!function\(\)\{var ([a-z])="str";return \2\+"str"\}\(\)$/
+              /^\/\*!\n \* this is a copyright block\n \*\/\n;?!function\(\)\{var ([a-z])="str";return \1\+"str"\}\(\),\n?\/\*!\n \* this is another copyright block\n \*\/\n!function\(\)\{var ([a-z])="str";return \2\+"str"\}\(\);?$/
 
       uglify({ build: original }, {}, {}, function (err, results) {
         refute(err)
