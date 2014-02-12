@@ -1,26 +1,22 @@
 {
     "name"            : "ender-builder"
   , "description"     : "Build assembler for the Ender CLI"
-  , "version"         : "0.1.1"
+  , "version"         : "1.0"
   , "authors"         : [
         "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
-      , "Dustin Diaz @ded <dustin@obvious.com> (https://github.com/ded)"
-      , "Jacob Thornton @fat <jacob@twitter.com> (https://github.com/fat)"
+      , "Dustin Diaz @ded <dustin@dustindiaz.com> (https://github.com/ded)"
+      , "Jacob Thornton @fat <jacob@medium.com> (https://github.com/fat)"
+      , "Andrew McCollum (https://github.com/amccollum)"
     ]
   , "keywords"        : []
   , "main"            : "./lib/index.js"
-  , "homepage"        : "https://ender.jit.su"
+  , "homepage"        : "https://enderjs.com"
   , "dependencies"    : {
-
-        "ender-package-util"     : "~0.0.1"
-      , "ender-minify"           : "~0.1.1"
-      , "ender-args-parser"      : "~0.0.2"
-      , "ender-dependency-graph" : "~0.0.2"
-
+        "async"              : "~0.2.10"
       , "errno"              : "~0.0.3"
-      , "async"              : "~0.1.22"
-      , "hogan.js"           : "~2.0.0"
       , "glob"               : "~3.1.14"
+      , "mu2"                : "~0.5.17"
+      , "uglify-js"          : "~2.4.7"
     }
   , "devDependencies" : {
         "bustermove"         : "*"

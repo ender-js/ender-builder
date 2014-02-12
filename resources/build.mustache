@@ -1,13 +1,15 @@
 /*!
   * =============================================================
-  * Ender: open module JavaScript framework (https://ender.no.de)
+  * Ender: open module JavaScript framework (https://enderjs.com)
   * Build: ender {{{context}}}
-  * Packages: {{packages}}
+  * Packages: {{{packageList}}}
   * =============================================================
   */
 
-{{#sandbox}}!function () {
+(function () {
+{{#packages}}{{>package.mustache}}{{/packages}}{{#packages}}{{^isBare}}{{#main}}
+  {{#isExposed}}window['{{{name}}}'] = {{/isExposed}}require('{{{name}}}');{{/main}}{{#bridge}}
+  require('{{{name}}}/{{{bridge}}}');{{/bridge}}{{/isBare}}{{/packages}}
 
-{{/sandbox}}{{{source}}}{{#sandbox}}
-
-}.call({});{{/sandbox}}
+}.call(window));
+//# sourceMappingURL={{{sourceMapName}}}
