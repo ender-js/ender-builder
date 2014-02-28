@@ -1,7 +1,7 @@
 {
     "name"            : "ender-builder"
   , "description"     : "Build assembler for the Ender CLI"
-  , "version"         : "1.0.2"
+  , "version"         : "1.0.3"
   , "authors"         : [
         "Rod Vagg @rvagg <rod@vagg.org> (https://github.com/rvagg)"
       , "Dustin Diaz @ded <dustin@dustindiaz.com> (https://github.com/ded)"
@@ -12,7 +12,7 @@
   , "main"            : "./lib/index.js"
   , "homepage"        : "https://enderjs.com"
   , "dependencies"    : {
-        "ender-args-parser"      : "1.0.2"
+        "ender-args-parser"      : "1.0.3"
 
       , "async"              : "~0.2.10"
       , "errno"              : "~0.0.3"
@@ -21,7 +21,7 @@
       , "uglify-js"          : "~2.4.7"
     }
   , "devDependencies" : {
-        "ender-package"      : "1.0.1"
+        "ender-package"      : "1.0.3"
 
       , "bustermove"         : "*"
       , "referee"            : "*"
