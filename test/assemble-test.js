@@ -131,6 +131,36 @@ var assert        = require('referee').assert
           )
         }
 
+      , 'with integration': function (done) {
+          var options = { integrate: ['pkg3'] }
+            , packages = [
+                  this.createPackageMock(
+                    { name: 'pkg1', version: '0.1.1', main: 'lib/main' }
+                  )
+                , this.createPackageMock(
+                    { name: 'pkg2', version: '1.1.1', main: 'lib/main', bridge: 'lib/bridge' }
+                  )
+                , this.createPackageMock(
+                    { name: 'pkg3', version: '1.2.3', main: 'lib/main' }
+                  )
+              ]
+
+          this.runAssembleTest(
+              options
+            , packages
+            , {
+                  packageList: 'pkg1@0.1.1 pkg2@1.1.1 pkg3@1.2.3'
+                , context: 'context string'
+                , packages: [
+                      { isBare: false, isExposed: false, sources: { length: 1 } }
+                    , { isBare: false, isExposed: false, sources: { length: 2 } }
+                    , { isBare: false, isExposed: false, bridge: 'bridge', sources: { length: 2 } }
+                  ]
+              }
+            , done
+          )
+        }
+
       , 'basic sandbox': function (done) {
           var options = { sandbox: [] }
             , packages = [

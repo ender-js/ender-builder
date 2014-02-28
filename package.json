@@ -12,14 +12,18 @@
   , "main"            : "./lib/index.js"
   , "homepage"        : "https://enderjs.com"
   , "dependencies"    : {
-        "async"              : "~0.2.10"
+        "ender-args-parser"      : "1.0.0"
+
+      , "async"              : "~0.2.10"
       , "errno"              : "~0.0.3"
       , "glob"               : "~3.1.14"
       , "mu2"                : "~0.5.17"
       , "uglify-js"          : "~2.4.7"
     }
   , "devDependencies" : {
-        "bustermove"         : "*"
+        "ender-package"      : "1.0.0"
+
+      , "bustermove"         : "*"
       , "referee"            : "*"
       , "tap"                : "*"
       , "require-subvert"    : "*"
